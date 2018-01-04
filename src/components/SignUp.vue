@@ -1,8 +1,9 @@
 <template>
   <div class="signUp">
   	<h3>Let's create a new account!</h3>
-  	<input type="email" v-model="email" placeholder="Email"><br>
-  	<input type="password" v-model="password" placeholder="Password"><br>
+  	<p v-if="errorMessage">{{errorMessage}}</p>
+    <input type="email" v-model="email" v-bind:class="{error: errorMessage}" placeholder="Email"><br>
+    <input type="password" v-model="password" v-bind:class="{error: errorMessage}" placeholder="Password"><br>
   	<button v-on:click="signUp">Sign Up</button>
   	<span>Already have an account? <router-link to="/login">login</router-link></span>
   </div>
@@ -16,20 +17,36 @@ export default {
   data: function() {
     return {
     	email: '',
-    	password: ''
+    	password: '',
+      errorMessage: ''
     }
   },
   methods: {
   	signUp: function() {
-  		firebase.auth().createUserWithEmailAndPassword(this.email, this.password).then(
-  			function(user) {
-  				this.$router.replace('hello')
-  			},
-  			function(err) {
-  				alert('Oops. ' + err.message)
-  			}
-  		);
-  	}
+      let self = this;
+  		firebase.auth().createUserWithEmailAndPassword(this.email, this.password)
+      .catch(function(error) {
+        // Handle Errors here.
+        var errorCode = error.code;
+        var errorMessage = error.message;
+        if (errorCode === 'auth/invalid-email') {
+          self.errorMessage = 'Please enter a valid email.';
+        }
+        else if (errorCode === 'auth/email-already-in-use') {
+          self.errorMessage = 'This email is already in use.';
+        }
+        else if (errorCode === 'auth/weak-password') {
+          self.errorMessage = 'The password is too weak.';
+        }
+        else {
+          self.errorMessage = errorMessage;
+        }
+      })
+      .then(function(user) {
+        firebase.database().ref('/users' + user.uid).set({email: user.email});
+        this.$router.replace('hello')
+		  });
+    }
   }
 }
 </script>
@@ -54,4 +71,7 @@ export default {
 		margin-top: 20px;
 		font-size: 11px;
 	}
+  .error {
+    border: 1px solid #CF3A24;
+  }
 </style>

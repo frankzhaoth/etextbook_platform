@@ -1,8 +1,9 @@
 <template>
   <div class="login">
   	<h3>Sign In</h3>
-  	<input type="email" v-model="email" placeholder="Email"><br>
-  	<input type="password" v-model="password" placeholder="Password"><br>
+    <p v-if="errorMessage">{{errorMessage}}</p>
+  	<input type="email" v-model="email" v-bind:class="{error: errorMessage}" placeholder="Email"><br>
+  	<input type="password" v-model="password" v-bind:class="{error: errorMessage}" placeholder="Password"><br>
   	<button v-on:click="login">Log in</button>
   	<p>You don't have an account? <router-link to="/sign-up">You can create one</router-link></p>
   </div>
@@ -16,19 +17,39 @@ export default {
   data () {
     return {
     	email: '',
-    	password: ''
+    	password: '',
+      errorMessage: ''
     }
   },
   methods: {
   	login: function() {
-  		firebase.auth().signInWithEmailAndPassword(this.email, this.password).then(
+      let self = this;
+  		firebase.auth().signInWithEmailAndPassword(this.email, this.password)
+      .catch(function(error) {
+        // Handle Errors here.
+        var errorCode = error.code;
+        var errorMessage = error.message;
+        if (errorCode == 'auth/invalid-email') {
+          self.errorMessage = 'Please enter a valid email.';
+        }
+        else if (errorCode == 'auth/user-not-found') {
+          self.errorMessage = 'This email is not registered.';
+        }
+        else if (errorCode == 'auth/wrong-password') {
+          self.errorMessage = 'The password for this user is incorrect. Please try again.';
+        }
+        else if (errorCode == 'auth/user-disabled') {
+          self.errorMessage = 'This user has been disabled. Please contact support.';
+        }
+        else {
+          self.errorMessage = errorMessage;
+        }
+        console.log(self.errorMessage);
+      })
+      .then(
   			function(user) {
-  				this.$router.replace('hello')
-  			},
-  			function(err) {
-  				alert('Oops. '+ err.message)
-  			}
-  		);
+  				self.$router.replace('hello')
+  		});
   	}
   }
 }
@@ -57,4 +78,7 @@ export default {
 		text-decoration: underline;
 		cursor: pointer;
 	}
+  .error {
+    border: 1px solid #CF3A24;
+  }
 </style>
