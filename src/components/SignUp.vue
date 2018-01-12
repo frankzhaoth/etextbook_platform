@@ -43,8 +43,8 @@ export default {
         }
       })
       .then(function(user) {
-        firebase.database().ref('/users' + user.uid).set({email: user.email});
-        this.$router.replace('hello')
+        firebase.database().ref('/users/' + user.uid).set({email: user.email});
+        self.$router.replace('dashboard');
 		  });
     }
   }

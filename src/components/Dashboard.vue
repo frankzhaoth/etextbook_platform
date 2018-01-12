@@ -1,5 +1,5 @@
 <template>
-  <div class="hello">
+  <div class="dashboard">
     <h1>{{ msg }}</h1>
     <h2>Essential Links</h2>
     <ul>
@@ -26,7 +26,7 @@ import firebase from 'firebase'
 
 export default {
   
-  name: 'HelloWorld',
+  name: 'Dashboard',
   data () {
     return {
       msg: 'Welcome to Your Vue.js App'

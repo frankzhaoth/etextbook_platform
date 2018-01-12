@@ -1,6 +1,6 @@
 <template>
   <div class="login">
-  	<h3>Sign In</h3>
+  	<h3>Log In</h3>
     <p v-if="errorMessage">{{errorMessage}}</p>
   	<input type="email" v-model="email" v-bind:class="{error: errorMessage}" placeholder="Email"><br>
   	<input type="password" v-model="password" v-bind:class="{error: errorMessage}" placeholder="Password"><br>
@@ -46,9 +46,8 @@ export default {
         }
         console.log(self.errorMessage);
       })
-      .then(
-  			function(user) {
-  				self.$router.replace('hello')
+      .then(function(user) {
+  				self.$router.replace('dashboard');
   		});
   	}
   }
