@@ -5,7 +5,7 @@
     <input type="email" v-model="email" v-bind:class="{error: errorMessage}" placeholder="Email"><br>
     <input type="password" v-model="password" v-bind:class="{error: errorMessage}" placeholder="Password"><br>
   	<button v-on:click="signUp">Sign Up</button>
-  	<span>Already have an account? <router-link to="/login">login</router-link></span>
+  	<span>Already have an account? <router-link to="/login">Login</router-link></span>
   </div>
 </template>
 

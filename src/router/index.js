@@ -4,6 +4,7 @@ import Router from 'vue-router'
 import Dashboard from '@/components/Dashboard'
 import Login from '@/components/Login'
 import SignUp from '@/components/SignUp'
+import PasswordReset from '@/components/PasswordReset'
 import firebase from 'firebase'
 
 Vue.use(Router)
@@ -27,6 +28,11 @@ let router = new Router({
     	path: '/sign-up',
     	name: 'SignUp',
     	component: SignUp
+    },
+    {
+      path: '/pass-reset',
+      name: 'PasswordReset',
+      component: PasswordReset
     },
     {
       path: '/dashboard',
