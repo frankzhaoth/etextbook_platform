@@ -1,23 +1,23 @@
 <template>
   <div class="dashboard">
-    <h1>{{ msg }}</h1>
-    <h2>Essential Links</h2>
-    <ul>
-      <li><a href="https://vuejs.org" target="_blank">Core Docs</a></li>
-      <li><a href="https://forum.vuejs.org" target="_blank">Forum</a></li>
-      <li><a href="https://chat.vuejs.org" target="_blank">Community Chat</a></li>
-      <li><a href="https://twitter.com/vuejs" target="_blank">Twitter</a></li>
-      <br>
-      <li><a href="http://vuejs-templates.github.io/webpack/" target="_blank">Docs for This Template</a></li>
-    </ul>
-    <h2>Ecosystem</h2>
-    <ul>
-      <li><a href="http://router.vuejs.org/" target="_blank">vue-router</a></li>
-      <li><a href="http://vuex.vuejs.org/" target="_blank">vuex</a></li>
-      <li><a href="http://vue-loader.vuejs.org/" target="_blank">vue-loader</a></li>
-      <li><a href="https://github.com/vuejs/awesome-vue" target="_blank">awesome-vue</a></li>
-    </ul>
-    <button v-on:click="logout">Logout</button>
+    <v-toolbar dark color="primary">
+      <v-toolbar-title class="white--text">My Dashboard</v-toolbar-title>
+      <v-spacer></v-spacer>
+      <v-btn flat v-on:click="logout">Logout</v-btn>
+    </v-toolbar>
+
+    <v-container fluid grid-list-lg class="grey lighten-4">
+      <v-layout row wrap>
+        <v-flex xs6 sm3 md2 lg2 v-for="textbook in textbooks" :key="textbook.title">
+          <v-card>
+            <v-card-media height="200px"></v-card-media>
+            <v-card-title primary-title>{{ textbook.title }}</v-card-title>
+          </v-card>
+        </v-flex>
+      </v-layout>
+    </v-container>
+
+    <p v-if="errorMessage">{{errorMessage}}</p>
   </div>
 </template>
 
@@ -29,7 +29,8 @@ export default {
   name: 'Dashboard',
   data () {
     return {
-      msg: 'Welcome to Your Vue.js App'
+      textbooks: [],
+      errorMessage: ''
     }
   },
   methods: {
@@ -38,6 +39,23 @@ export default {
         this.$router.replace('login')
       })
     }
+  },
+  beforeCreate: function() {
+    // Reads the textbooks from the database and populates the textbooks array
+    let self = this;
+    firebase.database().ref('/textbooks').once('value')
+    .then(function(textbooks) {
+      if (textbooks.exists()) {
+        textbooks.forEach(function(textbook) {
+          self.textbooks.push(textbook.val());
+        })
+      }
+    })
+    .catch(function(error) {
+      var errorCode = error.code;
+      var errorMessage = error.message;
+      self.errorMessage = errorMessage;
+    })
   }
 }
 </script>
