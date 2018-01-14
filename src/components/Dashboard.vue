@@ -1,11 +1,15 @@
 <template>
-  <div class="dashboard">
-    <v-container fluid grid-list-lg class="grey lighten-4">
+  <div id="dashboard">
+    <v-container grid-list-lg>
       <v-layout row wrap>
+        <v-flex xs12>
+          <h2>Textbook Collection</h2>
+          <hr/>
+        </v-flex>
         <v-flex xs6 sm3 md2 lg2 v-for="textbook in textbooks" :key="textbook.title">
           <v-card>
             <v-card-media :src="textbook.cover" height="200px"></v-card-media>
-            <v-card-title primary-title>{{ textbook.title }}</v-card-title>
+            <v-card-title>{{ textbook.title }}</v-card-title>
           </v-card>
         </v-flex>
       </v-layout>
@@ -103,28 +107,16 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-h1, h2 {
-  font-weight: normal;
-}
-ul {
-  list-style-type: none;
-  padding: 0;
-}
-li {
-  display: inline-block;
-  margin: 0 10px;
-}
-a {
-  color: #42b983;
-}
-button {
-  padding: 10px 20px;
-  background: #42b983;
-  color: white;
-  font-weight: bold;
-  border: none;
-  border-radius: 22px;
-  outline: 0;
-  cursor: pointer;
-}
+
+  #dashboard {
+    min-height: calc(100vh - 64px);
+    background: #f5f5f5;
+  }
+
+  #dashboard h2 {
+    margin-bottom: 0;
+    margin-top: 20px;
+    font-weight: 400;
+  }
+
 </style>
