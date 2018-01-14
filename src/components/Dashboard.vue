@@ -35,9 +35,10 @@ export default {
   },
   methods: {
     logout: function() {
-      firebase.auth().signOut().then(() => {
-        this.$router.replace('login')
-      })
+      let self = this;
+      firebase.auth().signOut().then(function() {
+        self.$router.replace('login');
+      });
     }
   },
   beforeCreate: function() {
