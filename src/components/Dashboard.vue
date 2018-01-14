@@ -1,11 +1,5 @@
 <template>
   <div class="dashboard">
-    <v-toolbar dark color="primary">
-      <v-toolbar-title class="white--text">My Dashboard</v-toolbar-title>
-      <v-spacer></v-spacer>
-      <v-btn flat v-on:click="logout">Logout</v-btn>
-    </v-toolbar>
-
     <v-container fluid grid-list-lg class="grey lighten-4">
       <v-layout row wrap>
         <v-flex xs6 sm3 md2 lg2 v-for="textbook in textbooks" :key="textbook.title">
@@ -16,8 +10,6 @@
         </v-flex>
       </v-layout>
     </v-container>
-
-    <p v-if="errorMessage">{{errorMessage}}</p>
   </div>
 </template>
 

@@ -57,9 +57,6 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-	.login {
-		margin-top: 40px;
-	}
 	input {
 		margin: 10px 0;
 		width: 20%;

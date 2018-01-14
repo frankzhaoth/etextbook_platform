@@ -44,11 +44,7 @@ export default {
       })
       .then(function(user) {
         firebase.database().ref('/users/' + user.uid).set({email: user.email});
-        firebase.auth().currentUser.sendEmailVerification()
-        .catch(function(error) {
-
-        })
-        .then(function() {
+        firebase.auth().currentUser.sendEmailVerification().then(function() {
           self.$router.replace('dashboard');
         });
 		  });
