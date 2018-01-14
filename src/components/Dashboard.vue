@@ -4,7 +4,7 @@
       <v-layout row wrap>
         <v-flex xs6 sm3 md2 lg2 v-for="textbook in textbooks" :key="textbook.title">
           <v-card>
-            <v-card-media height="200px"></v-card-media>
+            <v-card-media :src="textbook.cover" height="200px"></v-card-media>
             <v-card-title primary-title>{{ textbook.title }}</v-card-title>
           </v-card>
         </v-flex>
@@ -83,8 +83,13 @@ export default {
     .then(function(textbooks) {
       if (textbooks.exists()) {
         textbooks.forEach(function(textbook) {
-          self.textbooks.push(textbook.val());
-        })
+          let textbookData = textbook.val();
+          let coverRef = firebase.storage().ref('textbooks/covers/' + textbookData.cover);
+          coverRef.getDownloadURL().then(function(url) {
+            textbookData.cover = url;
+            self.textbooks.push(textbookData);
+          });
+        });
       }
     })
     .catch(function(error) {
