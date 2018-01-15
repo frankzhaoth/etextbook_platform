@@ -6,7 +6,7 @@
           <v-card-text>
             <h1 class="text-xs-center title mb-3">Login</h1>
             <v-text-field @keyup.enter="login" label="E-mail" v-model="email" required></v-text-field>
-            <v-text-field @keyup.enter="login" label="Password" v-model="password" required></v-text-field>
+            <v-text-field @keyup.enter="login" label="Password" v-model="password" type="password" required></v-text-field>
             <div class="text-xs-center">
               <v-btn type="button" color="primary" round v-on:click="login">Log in</v-btn>
               <p class="error-text">{{errorMessage}}</p>

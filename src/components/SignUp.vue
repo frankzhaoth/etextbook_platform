@@ -6,7 +6,7 @@
           <v-card-text>
             <h1 class="text-xs-center title mb-3">Let's create a new account!</h1>
             <v-text-field @keyup.enter="signUp" label="E-mail" v-model="email" required></v-text-field>
-            <v-text-field @keyup.enter="signUp" label="Password" v-model="password" required></v-text-field>
+            <v-text-field @keyup.enter="signUp" label="Password" v-model="password" type="password" required></v-text-field>
             <div class="text-xs-center">
               <v-btn type="button" color="primary" round v-on:click="signUp">Sign Up</v-btn>
               <p class="error-text">{{errorMessage}}</p>
