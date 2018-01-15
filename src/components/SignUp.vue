@@ -5,6 +5,7 @@
         <v-card class="pa-3">
           <v-card-text>
             <h1 class="text-xs-center title mb-3">Let's create a new account!</h1>
+            <v-text-field @keyup.enter="signUp" label="Name" v-model="name" required></v-text-field>
             <v-text-field @keyup.enter="signUp" label="E-mail" v-model="email" required></v-text-field>
             <v-text-field @keyup.enter="signUp" label="Password" v-model="password" type="password" required></v-text-field>
             <div class="text-xs-center">
@@ -26,6 +27,7 @@ export default {
   name: 'SignUp',
   data: function() {
     return {
+      name: '',
     	email: '',
     	password: '',
       errorMessage: ''
@@ -33,10 +35,15 @@ export default {
   },
   methods: {
   	signUp: function() {
+      if (this.name === '') {
+        this.errorMessage = 'Please enter your name.'
+        return;
+      }
+
       let self = this;
   		firebase.auth().createUserWithEmailAndPassword(this.email, this.password)
       .then(function(user) {
-        firebase.database().ref('/users/' + user.uid).set({email: user.email});
+        firebase.database().ref('/users/' + user.uid).set({email: user.email, name: self.name});
         firebase.auth().currentUser.sendEmailVerification().then(function() {
           self.$router.replace('dashboard');
         });
