@@ -1,12 +1,22 @@
 <template>
-  <div class="signUp">
-  	<h3>Let's create a new account!</h3>
-  	<p v-if="errorMessage">{{errorMessage}}</p>
-    <input type="email" v-model="email" v-bind:class="{error: errorMessage}" placeholder="Email"><br>
-    <input type="password" v-model="password" v-bind:class="{error: errorMessage}" placeholder="Password"><br>
-  	<button v-on:click="signUp">Sign Up</button>
-  	<span>Already have an account? <router-link to="/login">Login</router-link></span>
-  </div>
+  <v-container fill-height id="signUp">
+    <v-layout row wrap align-center>
+      <v-flex xs4 offset-xs4>
+        <v-card class="pa-3">
+          <v-card-text>
+            <h1 class="text-xs-center title mb-3">Let's create a new account!</h1>
+            <v-text-field @keyup.enter="signUp" label="E-mail" v-model="email" required></v-text-field>
+            <v-text-field @keyup.enter="signUp" label="Password" v-model="password" required></v-text-field>
+            <div class="text-xs-center">
+              <v-btn type="button" color="primary" round v-on:click="signUp">Sign Up</v-btn>
+              <p class="error-text">{{errorMessage}}</p>
+            </div>
+            <p class="text-xs-center caption mt-5 mb-0">Already have an account? <router-link to="/login">Login</router-link></p>
+          </v-card-text>
+        </v-card>
+      </v-flex>
+    </v-layout>
+  </v-container>  
 </template>
 
 <script>
@@ -55,25 +65,11 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-	.signUp {
-		margin-top: 40px;
-	}
-	input {
-		margin: 10px 0;
-		width: 20%;
-		padding: 15px;
-	}
-	button {
-		margin-top: 10px;
-		width: 10%;
-		cursor: pointer;
-	}
-	span {
-		display: block;
-		margin-top: 20px;
-		font-size: 11px;
-	}
-  .error {
-    border: 1px solid #CF3A24;
+	#signUp .title {
+    font-weight: 400;
+  }
+
+  #signUp .error-text {
+    color: #FF5252;
   }
 </style>
