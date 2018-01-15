@@ -1,13 +1,23 @@
 <template>
-  <div class="login">
-  	<h3>Log In</h3>
-    <p v-if="errorMessage">{{errorMessage}}</p>
-  	<input type="email" v-model="email" v-bind:class="{error: errorMessage}" placeholder="Email"><br>
-  	<input type="password" v-model="password" v-bind:class="{error: errorMessage}" placeholder="Password"><br>
-  	<button v-on:click="login">Log in</button>
-  	<p>You don't have an account? <router-link to="/sign-up">You can create one</router-link></p>
-    <p>Forgot your password?<router-link to="/pass-reset">Reset it</router-link></p>
-  </div>
+    <v-container fill-height id="login">
+      <v-layout row wrap align-center>
+        <v-flex xs4 offset-xs4>
+          <v-card class="pa-3">
+            <v-card-text>
+              <h1 class="text-xs-center title mb-3">Login</h1>
+              <v-text-field @keyup.enter="login" label="E-mail" v-model="email" required></v-text-field>
+              <v-text-field @keyup.enter="login" label="Password" v-model="password" required></v-text-field>
+              <div class="text-xs-center">
+                <v-btn type="button" color="primary" round v-on:click="login">Log in</v-btn>
+                <p class="error-text">{{errorMessage}}</p>
+              </div>
+              <p class="text-xs-center caption mt-5 mb-0">You don't have an account? <router-link to="/sign-up">Register</router-link></p>
+              <p class="text-xs-center caption"><router-link to="/pass-reset">Forgot your password?</router-link></p>
+            </v-card-text>
+          </v-card>
+        </v-flex>
+      </v-layout>
+    </v-container>  	
 </template>
 
 <script>
@@ -55,27 +65,12 @@ export default {
 }
 </script>
 
-<!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-	input {
-		margin: 10px 0;
-		width: 20%;
-		padding: 15px;
-	}
-	button {
-		margin-top: 20px;
-		width: 10%;
-		cursor: pointer;
-	}
-	p {
-		margin-top: 20px;
-		font-size: 11px;
-	}
-	p a {
-		text-decoration: underline;
-		cursor: pointer;
-	}
-  .error {
-    border: 1px solid #CF3A24;
+  #login .title {
+    font-weight: 400;
+  }
+
+  #login .error-text {
+    color: #FF5252;
   }
 </style>
