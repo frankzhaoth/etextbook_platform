@@ -30,7 +30,7 @@ let router = new Router({
     	component: SignUp
     },
     {
-      path: '/pass-reset',
+      path: '/password-reset',
       name: 'PasswordReset',
       component: PasswordReset
     },

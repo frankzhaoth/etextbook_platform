@@ -35,30 +35,36 @@ export default {
   methods: {
   	login: function() {
       let self = this;
-  		firebase.auth().signInWithEmailAndPassword(this.email, this.password)
-      .then(function(user) {
-          self.$router.replace('dashboard');
+      firebase.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION)
+      .then(function() {
+        firebase.auth().signInWithEmailAndPassword(self.email, self.password)
+        .then(function(user) {
+            self.$router.replace('dashboard');
+        })
+        .catch(function(error) {
+          // Handle Errors here.
+          var errorCode = error.code;
+          var errorMessage = error.message;
+          if (errorCode == 'auth/invalid-email') {
+            self.errorMessage = 'Please enter a valid email.';
+          }
+          else if (errorCode == 'auth/user-not-found') {
+            self.errorMessage = 'This email is not registered.';
+          }
+          else if (errorCode == 'auth/wrong-password') {
+            self.errorMessage = 'The password for this user is incorrect. Please try again.';
+          }
+          else if (errorCode == 'auth/user-disabled') {
+            self.errorMessage = 'This user has been disabled. Please contact support.';
+          }
+          else {
+            self.errorMessage = errorMessage;
+          }
+          console.log(self.errorMessage);
+        });
       })
       .catch(function(error) {
-        // Handle Errors here.
-        var errorCode = error.code;
-        var errorMessage = error.message;
-        if (errorCode == 'auth/invalid-email') {
-          self.errorMessage = 'Please enter a valid email.';
-        }
-        else if (errorCode == 'auth/user-not-found') {
-          self.errorMessage = 'This email is not registered.';
-        }
-        else if (errorCode == 'auth/wrong-password') {
-          self.errorMessage = 'The password for this user is incorrect. Please try again.';
-        }
-        else if (errorCode == 'auth/user-disabled') {
-          self.errorMessage = 'This user has been disabled. Please contact support.';
-        }
-        else {
-          self.errorMessage = errorMessage;
-        }
-        console.log(self.errorMessage);
+        console.log(error);
       });
   	}
   }

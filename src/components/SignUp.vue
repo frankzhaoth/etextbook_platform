@@ -34,29 +34,35 @@ export default {
   methods: {
   	signUp: function() {
       let self = this;
-  		firebase.auth().createUserWithEmailAndPassword(this.email, this.password)
-      .then(function(user) {
-        firebase.database().ref('/users/' + user.uid).set({email: user.email});
-        firebase.auth().currentUser.sendEmailVerification().then(function() {
-          self.$router.replace('dashboard');
+      firebase.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION)
+      .then(function() {
+    		firebase.auth().createUserWithEmailAndPassword(self.email, self.password)
+        .then(function(user) {
+          firebase.database().ref('/users/' + user.uid).set({email: user.email});
+          firebase.auth().currentUser.sendEmailVerification().then(function() {
+            self.$router.replace('dashboard');
+          });
+        })
+        .catch(function(error) {
+          // Handle Errors here.
+          var errorCode = error.code;
+          var errorMessage = error.message;
+          if (errorCode === 'auth/invalid-email') {
+            self.errorMessage = 'Please enter a valid email.';
+          }
+          else if (errorCode === 'auth/email-already-in-use') {
+            self.errorMessage = 'This email is already in use.';
+          }
+          else if (errorCode === 'auth/weak-password') {
+            self.errorMessage = 'The password is too weak.';
+          }
+          else {
+            self.errorMessage = errorMessage;
+          }
         });
       })
       .catch(function(error) {
-        // Handle Errors here.
-        var errorCode = error.code;
-        var errorMessage = error.message;
-        if (errorCode === 'auth/invalid-email') {
-          self.errorMessage = 'Please enter a valid email.';
-        }
-        else if (errorCode === 'auth/email-already-in-use') {
-          self.errorMessage = 'This email is already in use.';
-        }
-        else if (errorCode === 'auth/weak-password') {
-          self.errorMessage = 'The password is too weak.';
-        }
-        else {
-          self.errorMessage = errorMessage;
-        }
+        console.log(error);
       });
     }
   }
