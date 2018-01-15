@@ -35,6 +35,12 @@ export default {
   	signUp: function() {
       let self = this;
   		firebase.auth().createUserWithEmailAndPassword(this.email, this.password)
+      .then(function(user) {
+        firebase.database().ref('/users/' + user.uid).set({email: user.email});
+        firebase.auth().currentUser.sendEmailVerification().then(function() {
+          self.$router.replace('dashboard');
+        });
+      })
       .catch(function(error) {
         // Handle Errors here.
         var errorCode = error.code;
@@ -51,13 +57,7 @@ export default {
         else {
           self.errorMessage = errorMessage;
         }
-      })
-      .then(function(user) {
-        firebase.database().ref('/users/' + user.uid).set({email: user.email});
-        firebase.auth().currentUser.sendEmailVerification().then(function() {
-          self.$router.replace('dashboard');
-        });
-		  });
+      });
     }
   }
 }

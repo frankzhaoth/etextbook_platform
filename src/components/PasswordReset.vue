@@ -1,13 +1,22 @@
 <template>
-  <div class="passReset">
-  	<h3>Password Reset</h3>
-    <p v-if="errorMessage">{{errorMessage}}</p>
-  	<input type="email" v-model="email" v-bind:class="{error: errorMessage}" placeholder="Email"><br>
-  	
-  	<button v-on:click="reset">Reset</button>
-  	<p>Remember your password? <router-link to="/login">Log in</router-link></p>
-  	<p>{{resetMsg}}</p>
-  </div>
+  <v-container fill-height id="passReset">
+    <v-layout row wrap align-center>
+      <v-flex xs4 offset-xs4>
+        <v-card class="pa-3">
+          <v-card-text>
+            <h1 class="text-xs-center title mb-3">Password Reset</h1>
+            <v-text-field @keyup.enter="reset" label="E-mail" v-model="email" required></v-text-field>
+            <div class="text-xs-center">
+              <v-btn type="button" color="primary" round v-on:click="reset">Reset</v-btn>
+              <p class="error-text">{{errorMessage}}</p>
+            </div>
+            <p class="text-xs-center caption mt-5 mb-0">Remember your password? <router-link to="/login">Log in</router-link></p>
+            <p class="text-xs-center">{{resetMsg}}</p>
+          </v-card-text>
+        </v-card>
+      </v-flex>
+    </v-layout>
+  </v-container>  
 </template>
 
 <script>
@@ -27,6 +36,9 @@ export default {
       let self = this;
       let auth = firebase.auth();
   		auth.sendPasswordResetEmail(this.email)
+      .then(function(user) {
+          self.resetMsg = "An email for password reset has been sent."
+      })
       .catch(function(error) {
         // Handle Errors here.
         var errorCode = error.code;
@@ -44,10 +56,7 @@ export default {
           self.errorMessage = errorMessage;
         }
         console.log(self.errorMessage);
-      })
-      .then(function(user) {
-  				self.resetMsg = "An email for password reset has been sent."
-  		});
+      });
   	}
   }
 }
@@ -55,28 +64,11 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-	.login {
-		margin-top: 40px;
-	}
-	input {
-		margin: 10px 0;
-		width: 20%;
-		padding: 15px;
-	}
-	button {
-		margin-top: 20px;
-		width: 10%;
-		cursor: pointer;
-	}
-	p {
-		margin-top: 20px;
-		font-size: 11px;
-	}
-	p a {
-		text-decoration: underline;
-		cursor: pointer;
-	}
-  .error {
-    border: 1px solid #CF3A24;
+	#passReset .title {
+    font-weight: 400;
+  }
+
+  #passReset .error-text {
+    color: #FF5252;
   }
 </style>
