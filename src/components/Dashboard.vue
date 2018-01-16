@@ -3,6 +3,13 @@
     <v-container grid-list-lg>
       <v-layout row wrap>
         <v-flex xs12>
+          <v-btn color="primary" v-on:click="download">Download</v-btn>
+        </v-flex>
+        <v-flex xs12>
+          <div id="viewerContainer" style="width: 100%; height: 200px;">
+          </div>
+        </v-flex>
+        <v-flex xs12>
           <h2>Textbook Collection</h2>
           <hr/>
         </v-flex>
@@ -10,6 +17,9 @@
           <v-card>
             <v-card-media :src="textbook.cover" height="200px"></v-card-media>
             <v-card-title>{{ textbook.title }}</v-card-title>
+            <v-card-actions>
+                <v-btn style="margin: 0 auto;" flat color="primary"><v-icon class="mr-2">fa-star-o</v-icon>Favourite</v-btn>
+            </v-card-actions>
           </v-card>
         </v-flex>
       </v-layout>
@@ -21,13 +31,16 @@
 import firebase from 'firebase'
 import pdfjs from 'pdfjs-dist'
 
+let pdfDocument;
+let PAGE_HEIGHT;
+const DEFAULT_SCALE = 1.33;
+
 export default {
   
   name: 'Dashboard',
   data () {
     return {
       textbooks: [],
-      errorMessage: ''
     }
   },
   methods: {
@@ -38,46 +51,91 @@ export default {
       });
     },
     download: function() {
-      var storage = firebase.storage();
-      var pathReference = storage.ref('textbooks/CSC 444 Project --- Marketplace.pdf');
+      let storage = firebase.storage();
+      let pathRef = storage.refFromURL(this.textbooks[1].url);
 
-      //pdfjs.PDFJS.workerSrc = '/../node_modules/pdfjs-dist/build/pdf.worker.entry.js';
-      pdfjs.PDFJS.workerSrc = '../../build/webpack/pdf.worker.entry.js';
+      let viewer = document.getElementById('viewerContainer');
+      let self = this;
+      pathRef.getDownloadURL().then(function(url) {
+        pdfjs.getDocument(url).then(function (pdf) {
 
-      var SEARCH_FOR = ''; // try 'Mozilla';
+          pdfDocument = pdf;
+          
+          for (let i = 0; i < pdf.pdfInfo.numPages; i++) {
+            let page = self.createEmptyPage(i + 1);
+            viewer.appendChild(page);
+          }
 
-      var container = document.getElementById('viewerContainer');
+          self.loadPage(1).then(pdfPage => {
+            let viewport = pdfPage.getViewport(DEFAULT_SCALE);
+            self.PAGE_HEIGHT = viewport.height;
+            document.body.style.width = '${viewport.width}px';
+          });
 
-      // (Optionally) enable hyperlinks within PDF files.
-
-      var pdfViewer = new pdfjs.PDFViewer({
-        container: container
+        })
+      })
+      .catch(function(error) {
+        console.log(error);
       });
+    },
+    createEmptyPage: function(num) {
+      let page = document.createElement('div');
+      let canvas = document.createElement('canvas');
+      let wrapper = document.createElement('div');
+      let textLayer = document.createElement('div');
 
-      // (Optionally) enable find controller.
-      var pdfFindController = new pdfjs.PDFFindController({
-        pdfViewer: pdfViewer
-      });
-      pdfViewer.setFindController(pdfFindController);
+      page.className = 'page';
+      wrapper.className = 'canvasWrapper';
+      textLayer.className = 'textLayer';
 
-      container.addEventListener('pagesinit', function () {
-        // We can use pdfViewer now, e.g. let's change default scale.
-        pdfViewer.currentScaleValue = 'page-width';
+      page.setAttribute('id', `pageContainer${num}`);
+      page.setAttribute('data-loaded', 'false');
+      page.setAttribute('data-page-number', num);
 
-        if (SEARCH_FOR) { // We can try search for things
-          pdfFindController.executeCommand('find', {query: SEARCH_FOR});
-        }
-      });
+      canvas.setAttribute('id', `page${num}`);
 
-      // Loading document.
-      pathReference.getDownloadURL().then(function(url) {
-        pdfjs.getDocument(url).then(function (pdfDocument) {
-          // Document loaded, specifying document for the viewer and
-          // the (optional) linkService.
-          pdfViewer.setDocument(pdfDocument);
+      page.appendChild(wrapper);
+      page.appendChild(textLayer);
+      wrapper.appendChild(canvas);
+
+      return page;
+    },
+    loadPage: function(pageNum) {
+      return pdfDocument.getPage(pageNum).then(pdfPage => {
+        let page = document.getElementById(`pageContainer${pageNum}`);
+        let canvas = page.querySelector('canvas');
+        let wrapper = page.querySelector('.canvasWrapper');
+        let container = page.querySelector('.textLayer');
+        let canvasContext = canvas.getContext('2d');
+        let viewport = pdfPage.getViewport(DEFAULT_SCALE);
+
+        canvas.width = viewport.width * 2;
+        canvas.height = viewport.height * 2;
+        page.style.width = `${viewport.width}px`;
+        page.style.height = `${viewport.height}px`;
+        wrapper.style.width = `${viewport.width}px`;
+        wrapper.style.height = `${viewport.height}px`;
+        container.style.width = `${viewport.width}px`;
+        container.style.height = `${viewport.height}px`;
+
+        pdfPage.render({
+          canvasContext,
+          viewport
         });
-      });
 
+        pdfPage.getTextContent().then(textContent => {
+          PDFJS.renderTextLayer({
+            textContent,
+            container,
+            viewport,
+            textDivs: []
+          });
+        });
+
+        page.setAttribute('data-loaded', 'true');
+
+        return pdfPage;
+      });
     }
   },
   beforeCreate: function() {
@@ -97,9 +155,7 @@ export default {
       }
     })
     .catch(function(error) {
-      var errorCode = error.code;
-      var errorMessage = error.message;
-      self.errorMessage = errorMessage;
+      console.log(error);
     })
   }
 }
@@ -117,6 +173,11 @@ export default {
     margin-bottom: 0;
     margin-top: 20px;
     font-weight: 400;
+  }
+
+  #dashboard .loader {
+    color: #666;
+    text-align: center;
   }
 
 </style>

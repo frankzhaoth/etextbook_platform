@@ -1,10 +1,10 @@
 <template>
-  <v-toolbar color="white">
-    <v-toolbar-title style="line-height: 64px;"><img id="logo" src="static/logo.png" /></v-toolbar-title>
+  <v-toolbar flat style="background: #9A3658;" >
+    <v-toolbar-title style="line-height: 64px;"><img id="logo" src="static/logo_white.png" /></v-toolbar-title>
     <v-spacer></v-spacer>
-    <p class="grey--text darken-3" style="line-height: 64px; margin: 0; font-weight: 400;">{{name}}</p>
+    <p class="white--text" style="line-height: 64px; margin: 0; font-weight: 400;">{{name}}</p>
     <v-menu>
-      <v-btn flat color="grey lighten-1" icon slot="activator">
+      <v-btn flat color="white" icon slot="activator">
         <v-icon small>fa-caret-down</v-icon>
       </v-btn>
       <v-card>

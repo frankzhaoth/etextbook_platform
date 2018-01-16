@@ -1,15 +1,16 @@
 <template>
-  <v-container fill-height id="signUp">
+  <v-container style="background: #9A3658;" fluid fill-height id="signUp">
     <v-layout row wrap align-center>
-      <v-flex xs4 offset-xs4>
-        <v-card class="pa-3">
+      <v-flex xs12 sm6 lg4 offset-sm3 offset-lg4>
+        <img id="logo" src="static/logo_white.png" />
+        <v-card class="pa-3 mt-4" style="border-radius: 6px;">
           <v-card-text>
             <h1 class="text-xs-center title mb-3">Let's create a new account!</h1>
             <v-text-field @keyup.enter="signUp" label="Name" v-model="name" required></v-text-field>
             <v-text-field @keyup.enter="signUp" label="E-mail" v-model="email" required></v-text-field>
             <v-text-field @keyup.enter="signUp" label="Password" v-model="password" type="password" required></v-text-field>
             <div class="text-xs-center">
-              <v-btn type="button" color="primary" round v-on:click="signUp">Sign Up</v-btn>
+              <v-btn type="button" color="primary" depressed v-on:click="signUp">Sign Up</v-btn>
               <p class="error-text">{{errorMessage}}</p>
             </div>
             <p class="text-xs-center caption mt-5 mb-0">Already have an account? <router-link to="/login">Login</router-link></p>
@@ -78,5 +79,11 @@ export default {
 
   #signUp .error-text {
     color: #FF5252;
+  }
+
+  #logo {
+    width: 34%;
+    display: block;
+    margin: 0 auto;
   }
 </style>

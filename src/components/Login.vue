@@ -1,8 +1,9 @@
 <template>
   <v-container fill-height id="login">
     <v-layout row wrap align-center>
-      <v-flex xs4 offset-xs4>
-        <v-card class="pa-3">
+      <v-flex xs12 sm6 lg4 offset-sm3 offset-lg4>
+        <img id="logo" src="static/logo.png" />
+        <v-card class="pa-3 mt-4">
           <v-card-text>
             <h1 class="text-xs-center title mb-3">Login</h1>
             <v-text-field @keyup.enter="login" label="E-mail" v-model="email" required></v-text-field>
@@ -72,5 +73,11 @@ export default {
 
   #login .error-text {
     color: #FF5252;
+  }
+
+  #logo {
+    width: 34%;
+    display: block;
+    margin: 0 auto;
   }
 </style>
