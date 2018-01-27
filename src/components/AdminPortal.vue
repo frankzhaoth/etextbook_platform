@@ -20,14 +20,29 @@
         required
       ></v-text-field>
 
+      <label for="coverButton">Book cover:</label><br>
       <input type="file" id="coverButton" value="upload" required @change="processCover($event)"/>
       <v-progress-linear v-model="cover_progress"></v-progress-linear>
     
+      <label for="coverButton">Book:</label><br>
       <input type="file" id="bookButton" value="upload" required @change="processBook($event)"/>
       <v-progress-linear v-model="book_progress"></v-progress-linear>
       
       <v-btn @click="submit">submit</v-btn>
     </form> 
+
+    <v-layout row justify-center>
+    <v-dialog v-model="dialog" persistent max-width="290">
+      <v-card>
+        <v-card-title class="headline">Textbook was successfully added!</v-card-title>
+        <v-card-text>Feel free to add another one.</v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="green darken-1" flat @click.native="dialog = false">OK</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+  </v-layout>
 
   </div>
 </template>
@@ -45,7 +60,8 @@ export default {
       cover_file: '',
       book_file: '',
       cover_progress: 0,
-      book_progress: 0
+      book_progress: 0,
+      dialog: false
     }
   },
   methods: {
@@ -97,7 +113,9 @@ export default {
                 'cover': self.cover_file.name,
                 'url': self.book_file.name},
                 function() {
-                  console.log("completed")
+                  // When completed clear all the fields and show dialog
+                  Object.assign(self.$data, self.$options.data());
+                  self.dialog = true;
                 });
             });
         });
