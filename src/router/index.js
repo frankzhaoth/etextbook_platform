@@ -6,6 +6,7 @@ import Login from '@/components/Login'
 import SignUp from '@/components/SignUp'
 import PasswordReset from '@/components/PasswordReset'
 import AdminPortal from '@/components/AdminPortal'
+import Textbook from '@/components/Textbook'
 import firebase from 'firebase'
 
 Vue.use(Router)
@@ -47,6 +48,14 @@ let router = new Router({
       path: '/adminportal',
       name: 'AdminPortal',
       component: AdminPortal,
+      meta: {
+        requiresAuth: true
+      }
+    },
+    {
+      path: '/textbook/:textbookId',
+      name: 'Textbook',
+      component: Textbook,
       meta: {
         requiresAuth: true
       }

@@ -13,8 +13,8 @@
           <h2>Textbook Collection</h2>
           <hr/>
         </v-flex>
-        <v-flex xs6 sm3 md2 lg2 v-for="textbook in textbooks" :key="textbook.title">
-          <v-card>
+        <v-flex xs6 sm3 md2 lg2 v-for="textbook in textbooks" :key="textbook.key">
+          <v-card v-on:click.native="clickTextbook(textbook.key)">
             <v-card-media :src="textbook.cover" height="200px"></v-card-media>
             <v-card-title>{{ textbook.title }}</v-card-title>
             <v-card-actions>
@@ -50,6 +50,7 @@ export default {
         self.$router.replace('login');
       });
     },
+    
     download: function() {
       let storage = firebase.storage();
       let pathRef = storage.refFromURL(this.textbooks[1].url);
@@ -78,6 +79,7 @@ export default {
         console.log(error);
       });
     },
+
     createEmptyPage: function(num) {
       let page = document.createElement('div');
       let canvas = document.createElement('canvas');
@@ -100,6 +102,7 @@ export default {
 
       return page;
     },
+
     loadPage: function(pageNum) {
       return pdfDocument.getPage(pageNum).then(pdfPage => {
         let page = document.getElementById(`pageContainer${pageNum}`);
@@ -136,8 +139,13 @@ export default {
 
         return pdfPage;
       });
+    },
+
+    clickTextbook: function(key) {
+      this.$router.push('/textbook/' + key);
     }
   },
+    
   beforeCreate: function() {
     // Reads the textbooks from the database and populates the textbooks array
     let self = this;
@@ -146,6 +154,7 @@ export default {
       if (textbooks.exists()) {
         textbooks.forEach(function(textbook) {
           let textbookData = textbook.val();
+          textbookData.key = textbook.key;
           let coverRef = firebase.storage().ref('textbooks/covers/' + textbookData.cover);
           coverRef.getDownloadURL().then(function(url) {
             textbookData.cover = url;
@@ -156,7 +165,7 @@ export default {
     })
     .catch(function(error) {
       console.log(error);
-    })
+    });
   }
 }
 </script>
