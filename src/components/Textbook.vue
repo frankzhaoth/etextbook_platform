@@ -1,6 +1,10 @@
 <template>
 	<div id="textbook">
 		<h1>{{ title }}</h1>
+
+    <div>
+      <v-btn @click="clickForum" flat>Forum</v-btn>
+    </div>
 	</div>
 </template>
 
@@ -20,7 +24,9 @@ export default {
   },
   
   methods: {
-
+    clickForum: function() {
+      this.$router.push('/textbook/' + this.$route.params.textbookId + '/forum');
+    }
   },
 
   beforeCreate: function() {

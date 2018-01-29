@@ -7,6 +7,9 @@ import SignUp from '@/components/SignUp'
 import PasswordReset from '@/components/PasswordReset'
 import AdminPortal from '@/components/AdminPortal'
 import Textbook from '@/components/Textbook'
+import Forum from '@/components/Forum'
+import NewQuestion from '@/components/NewQuestion'
+import Question from '@/components/Question'
 import firebase from 'firebase'
 
 Vue.use(Router)
@@ -56,6 +59,30 @@ let router = new Router({
       path: '/textbook/:textbookId',
       name: 'Textbook',
       component: Textbook,
+      meta: {
+        requiresAuth: true
+      }
+    },
+    {
+      path: '/textbook/:textbookId/forum',
+      name: 'Forum',
+      component: Forum,
+      meta: {
+        requiresAuth: true
+      }
+    },
+    {
+      path: '/textbook/:textbookId/forum/new',
+      name: 'NewQuestion',
+      component: NewQuestion,
+      meta: {
+        requiresAuth: true
+      }
+    },
+    {
+      path: '/textbook/:textbookId/forum/:questionId',
+      name: 'Question',
+      component: Question,
       meta: {
         requiresAuth: true
       }
