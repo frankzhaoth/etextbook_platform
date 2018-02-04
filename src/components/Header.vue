@@ -43,7 +43,7 @@ export default {
     logout: function() {
       let self = this;
       firebase.auth().signOut().then(function() {
-        self.$router.replace('login');
+        self.$router.replace('/login');
       });
     }
   },

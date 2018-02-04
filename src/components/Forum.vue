@@ -62,7 +62,7 @@ export default {
   	}
   },
 
-  beforeCreate: function() {
+  created: function() {
     let self = this;
     let textbookId = self.$route.params.textbookId;
 
@@ -80,6 +80,7 @@ export default {
       	  });
       	});   
       }
+      console.log(self);
     });
   }
 }

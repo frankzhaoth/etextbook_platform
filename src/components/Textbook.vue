@@ -29,7 +29,7 @@ export default {
     }
   },
 
-  beforeCreate: function() {
+  created: function() {
     
     let self = this;
 

@@ -146,7 +146,7 @@ export default {
     }
   },
     
-  beforeCreate: function() {
+  created: function() {
     // Reads the textbooks from the database and populates the textbooks array
     let self = this;
     firebase.database().ref('/textbooks').once('value')

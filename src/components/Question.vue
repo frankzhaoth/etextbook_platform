@@ -27,21 +27,18 @@ export default {
 
   },
 
-  beforeCreate: function() {
-    console.log("beforeCreate is called");
+  created: function() {
     let self = this;
     let textbookId = self.$route.params.textbookId;
     let questionId = self.$route.params.questionId;
 
     let qRef = firebase.database().ref('/forum/' + textbookId + '/' + questionId);
-    qRef.once('value', function(snapshot) {
-      if (snapshot.exists()) {
-        let questionData = snapshot.val();
+    qRef.once('value', function(question) {
+      if (question.exists()) {
+        let questionData = question.val();
         self.question = questionData.question;
         self.body = questionData.body;
         self.userId = questionData.userId;
-        console.log(questionData);
-        console.log(self.question);
       }
     });
   }
