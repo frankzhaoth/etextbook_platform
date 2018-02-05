@@ -9,7 +9,8 @@
           <div id="viewerContainer" style="width: 100%; height: 200px;">
           </div>
         </v-flex>
-        <v-flex xs12>
+        
+        <!--<v-flex xs12>
           <h2>Textbook Collection</h2>
           <hr/>
         </v-flex>
@@ -21,7 +22,7 @@
                 <v-btn style="margin: 0 auto;" flat color="primary"><v-icon class="mr-2">fa-star-o</v-icon>Favourite</v-btn>
             </v-card-actions>
           </v-card>
-        </v-flex>
+        </v-flex>-->
       </v-layout>
     </v-container>
   </div>
@@ -52,7 +53,7 @@ export default {
     },
     download: function() {
       let storage = firebase.storage();
-      let pathRef = storage.refFromURL(this.textbooks[1].url);
+      let pathRef = storage.refFromURL(this.textbooks[0].url);
 
       let viewer = document.getElementById('viewerContainer');
       let self = this;
@@ -153,6 +154,7 @@ export default {
           });
         });
       }
+      console.log(self.textbooks);
     })
     .catch(function(error) {
       console.log(error);
@@ -165,7 +167,7 @@ export default {
 <style scoped>
 
   #dashboard {
-    min-height: calc(100vh - 64px);
+    min-height: calc(100vh - 105px);
     background: #f5f5f5;
   }
 
