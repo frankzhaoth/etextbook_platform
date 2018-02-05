@@ -1,10 +1,20 @@
 <template>
 	<div id="textbook">
-		<h1>{{ title }}</h1>
+    <v-container fluid>    
+      <v-layout>
+    		<h4 class="display-1">{{ title }}</h4>
+        <v-spacer></v-spacer>
+        <v-btn color="primary" @click="clickForum" flat>Forum</v-btn>
+      </v-layout>
 
-    <div>
-      <v-btn @click="clickForum" flat>Forum</v-btn>
-    </div>
+      
+      <v-flex lg3>
+        <h6 class="subheading ml-2">{{ author }}</h6>
+        <h6 class="subheading ml-2">{{ isbn }}</h6>  
+        <img class="mt-3":src="cover" height="500px"></img>
+      </v-flex>
+      
+    </v-container>
 	</div>
 </template>
 

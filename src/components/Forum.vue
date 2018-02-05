@@ -1,7 +1,7 @@
 <template>
-  <div id="forum">
+  <div id="forum" class="ma-3">
     <div>
-      <v-btn @click="clickNewQuestion" flat>New Question</v-btn>
+      <v-btn color="primary" @click="clickNewQuestion" flat>New Question</v-btn>
     </div>
 
     <v-data-table
@@ -13,14 +13,12 @@
       <template slot="items" slot-scope="props">
       	<tr @click="clickQuestion(props.item.qId)">
           <td>{{ props.item.question }}</td>
-          <td class="text-xs-right">{{ props.item.userId }}</td>
+          <td class="text-xs-right">{{ props.item.userName }}</td>
         </tr>
       </template>
       
       <template slot="no-data">
-        <v-alert :value="true" color="error" icon="warning">
-          Sorry, there are no questions
-        </v-alert>
+        <v-alert :value="true" color="error">Sorry, there are no questions</v-alert>
       </template>
     </v-data-table>
 
@@ -45,7 +43,7 @@ export default {
         },
         {
           text: 'User', 
-          value: 'userId',
+          value: 'userName',
           sortable: false
         }
       ],
@@ -75,12 +73,12 @@ export default {
       	  
       	  self.items.push({
       	  	question: questionData.question,
+            userName: questionData.userName,
       	  	userId: questionData.userId,
       	  	qId: questionKey
       	  });
       	});   
       }
-      console.log(self);
     });
   }
 }

@@ -16,7 +16,7 @@
     </v-card>
 
     <v-subheader>
-      <h6 class="title">Answers</h6>
+      <h6 class="title" v-if="answers.length > 0">Answers</h6>
     </v-subheader>
     <v-card v-for="answer in answers" :key="answer.answer" flat>
       <v-card-text>
