@@ -13,14 +13,14 @@
             <p alt="avatar" class="avatar white--text">{{getInitial}}</p>
           </v-btn>
           <div>
-            <p class="name">Anmol Singh</p>
+            <p class="name">{{name}}</p>
             <p class="mb-0 grey--text lighten-2 email">{{email}}</p>
             <v-btn v-on:click="logout" class="ml-0" color="red lighten-1 white--text">Logout</v-btn>
           </div>
         </v-card-title>
       </v-card>
     </v-menu>
-    
+
     <!--<v-btn flat color="red lighten-1" v-on:click="logout">Logout</v-btn>-->
 
   </v-toolbar>
@@ -43,7 +43,7 @@ export default {
     logout: function() {
       let self = this;
       firebase.auth().signOut().then(function() {
-        self.$router.replace('login');
+        self.$router.replace('/login');
       });
     }
   },
