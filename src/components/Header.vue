@@ -7,7 +7,7 @@
       <v-btn flat color="white" icon slot="activator">
         <v-icon small>fa-caret-down</v-icon>
       </v-btn>
-      <v-card>
+      <v-card style="z-index: 10001">
         <v-card-title class="align-start">
           <v-btn large color="blue lighten-1" class="ml-0" icon disabled>
             <p alt="avatar" class="avatar white--text">{{getInitial}}</p>
@@ -45,6 +45,9 @@ export default {
       firebase.auth().signOut().then(function() {
         self.$router.replace('/login');
       });
+    },
+    goHome: function() {
+      this.$router.replace('dashboard');
     }
   },
   computed: {

@@ -10,6 +10,7 @@ import Textbook from '@/components/Textbook'
 import Forum from '@/components/Forum'
 import NewQuestion from '@/components/NewQuestion'
 import Question from '@/components/Question'
+import pdfTester from '@/components/pdfTester'
 import firebase from 'firebase'
 
 Vue.use(Router)
@@ -64,6 +65,14 @@ let router = new Router({
       }
     },
     {
+      path: '/textbook/:textbookId/view',
+      name: 'pdfTester',
+      component: pdfTester,
+      meta: {
+        requiresAuth: true
+      }
+    },
+    {
       path: '/textbook/:textbookId/forum',
       name: 'Forum',
       component: Forum,
@@ -86,7 +95,7 @@ let router = new Router({
       meta: {
         requiresAuth: true
       }
-    }
+    },
   ]
 });
 
