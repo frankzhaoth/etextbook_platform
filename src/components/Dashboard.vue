@@ -77,16 +77,16 @@ export default {
       // Remove as favourite
       if (_key in this.favourites) {
         this.$delete(this.favourites, _key);
-        firebase.database().ref('/users/' + currentUser + '/favourites/').set(Object.keys(this.favourites));
+        firebase.database().ref('/users/' + currentUser + '/favourites/').set(this.favourites);
       }
       // Set as favourite
       else {
         for (var index in this.textbooks) {
           if (this.textbooks[index].key === _key) {
-            this.$set(this.favourites, _key, this.textbooks[index])
+            this.$set(this.favourites, _key, this.textbooks[index]);
           }
         }
-        firebase.database().ref('/users/' + currentUser + '/favourites/').set(Object.keys(this.favourites));
+        firebase.database().ref('/users/' + currentUser + '/favourites/').set(this.favourites);
       }
     },
 
@@ -101,7 +101,7 @@ export default {
     .then(function(favourites) {
       if (favourites.exists()) {
         favourites.forEach(function(favourite) {
-          self.favourites[favourite.val().key] = (favourite.val());
+          self.$set(self.favourites, favourite.val().key, favourite.val());
         })
       }
     });
