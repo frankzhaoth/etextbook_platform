@@ -2,6 +2,21 @@
   <div id="dashboard">
     <v-container grid-list-lg>
       <v-layout row wrap>
+        <v-flex xs12 v-if="Object.keys(this.favourites).length > 0">
+          <h2>My Favourites</h2>
+          <hr/>
+        </v-flex>
+        <v-flex xs6 sm3 md2 lg2 v-for="favourite in favourites">
+          <v-card>
+            <v-card-media v-on:click="clickTextbook(favourite)" :src="favourite.cover" height="200px"></v-card-media>
+            <v-card-title>{{favourite.title}}</v-card-title>
+            <v-card-actions>
+                <v-icon v-on:click="toggleFavourite(favourite.key)" class="mr-2 ml-2">fa-star-o</v-icon>
+                <v-icon v-on:click="viewTextbook(favourite.key)" class="mr-2 ml-2">fa-eye</v-icon>
+            </v-card-actions>
+          </v-card>
+        </v-flex>
+
         <v-flex xs12>
           <h2>Textbook Collection</h2>
           <hr/>
@@ -30,7 +45,7 @@ export default {
   data () {
     return {
       textbooks: [],
-      favourites: []
+      favourites: {}
     }
   },
   methods: {
@@ -49,18 +64,29 @@ export default {
       this.$router.push('/textbook/' + key + "/view");
     },   
 
+    getTextbook: function(key) {
+      for (var index in this.textbooks) {
+        if (this.textbooks[index].key === key)
+          return this.textbooks[index];
+      }
+    },
+
     toggleFavourite: function(_key) {
       let currentUser = firebase.auth().currentUser.uid;
 
       // Remove as favourite
-      if (this.favourites.indexOf(_key) > -1) {
-        this.favourites.splice(this.favourites.indexOf(_key), 1);
-        firebase.database().ref('/users/' + currentUser + '/favourites/').set(this.favourites);
+      if (_key in this.favourites) {
+        this.$delete(this.favourites, _key);
+        firebase.database().ref('/users/' + currentUser + '/favourites/').set(Object.keys(this.favourites));
       }
       // Set as favourite
       else {
-        this.favourites.push(_key);
-        firebase.database().ref('/users/' + currentUser + '/favourites/').set(this.favourites);
+        for (var index in this.textbooks) {
+          if (this.textbooks[index].key === _key) {
+            this.$set(this.favourites, _key, this.textbooks[index])
+          }
+        }
+        firebase.database().ref('/users/' + currentUser + '/favourites/').set(Object.keys(this.favourites));
       }
     },
 
@@ -75,10 +101,9 @@ export default {
     .then(function(favourites) {
       if (favourites.exists()) {
         favourites.forEach(function(favourite) {
-          self.favourites.push(favourite.val());
+          self.favourites[favourite.val().key] = (favourite.val());
         })
       }
-      console.log(self.favourites);
     });
 
     firebase.database().ref('/textbooks').once('value')
@@ -94,7 +119,6 @@ export default {
           });
         });
       }
-      console.log(self.textbooks);
     })
     .catch(function(error) {
       console.log(error);
