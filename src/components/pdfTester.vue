@@ -5,6 +5,10 @@
           <div class="pageShift">
             <span v-on:click="prevPage"><v-icon>fa-chevron-left</v-icon></span>
             <span v-on:click="nextPage"><v-icon>fa-chevron-right</v-icon></span>
+            <span style="background: none; color: #555;">Jump to:</span>
+            <select v-model.number="page">
+              <option v-for="pageNum in numPages">{{pageNum}}</option>
+            </select>
           </div>
           <div class="pageNumber">
             <span>Page {{page}} of {{numPages}}</span>
@@ -124,6 +128,11 @@ export default {
   #pdfViewer .tools .pageShift span i {
     color: #FFF;
     font-size: .9rem;
+  }
+
+  #pdfViewer .tools .pageShift select {
+    border: 1px solid #ABB7B7;
+    padding: 0px 10px;
   }
 
   #pdfViewer .tools .pageNumber {
