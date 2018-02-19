@@ -22,11 +22,12 @@
       </v-flex>
       <v-flex xs2 sm2 id="notes">
         <p class="subheading">Notes - Page {{page}}</p>
+        <span>All</span>
         <v-divider></v-divider>
         <v-flex xs12>
           <v-card class="new" v-bind:style="{ backgroundColor: '#' + selectedColour}">
             <v-card-title>
-              <textarea v-model="newNote" placeholder="New note..."></textarea>
+              <textarea @keyup.enter="addNote" v-model="newNote" placeholder="New note..."></textarea>
               <span v-if="newNote" v-on:click="addNote" style="position: absolute; bottom: 10px; right: 16px; color: #313DB2; cursor: pointer;">Add</span>
             </v-card-title>
             <v-card-actions>
@@ -38,7 +39,7 @@
           <v-card v-for="(note, key) in notes"  v-bind:style="{ backgroundColor: '#' + note.colour}">
             <v-icon v-on:click="deleteNote(key)">fa-trash</v-icon>
             <v-card-title>
-              <p>{{note.text}}</p>
+              <p v-html="getAnchormeText(note.text)"></p>
             </v-card-title>
           </v-card>
 
@@ -55,6 +56,7 @@
 import firebase from 'firebase'
 import pdf from 'vue-pdf'
 import ClipLoader from 'vue-spinner/src/ClipLoader.vue'
+import anchorme from "anchorme"
 
 export default {
   name: 'pdfTester',
@@ -81,11 +83,14 @@ export default {
       textbook: {},
       newNote: '',
       notes: {},
-      colours: ['FFF9A2', '8BBDEA', 'EAB9EA', 'A5E7F9', 'D9F9A5'],
+      colours: ['FFF9A2', '6FC0F7', 'EAB9EA', 'A5E7F9', 'D9F9A5'],
       selectedColour: 'FFF9A2'
     }
   },
   methods: {
+    getAnchormeText: function(text) {
+      return anchorme(text);
+    },
     prevPage: function() {
       if (this.page > 1)
         this.page -= 1;
@@ -202,6 +207,7 @@ export default {
   #pdfViewer .tools .pageShift select {
     border: 1px solid #ABB7B7;
     padding: 0px 10px;
+    background: #FFF;
   }
 
   #pdfViewer .tools .pageNumber {
@@ -226,10 +232,14 @@ export default {
     border-right: 1px solid #ABB7B7;
   }
 
-  #pdfViewer #notes p.subheading {
+  #pdfViewer #notes > p.subheading {
     margin-bottom: 5px;
-    width: calc(100% - 14px);
+    width: calc(100% - 20px);
     display: inline-block;
+  }
+
+  #pdfViewer #notes > span {
+    font-size: .9rem;
   }
 
   #pdfViewer #notes .fa-angle-left {
