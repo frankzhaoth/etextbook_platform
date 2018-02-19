@@ -3,6 +3,7 @@
 import Vue from 'vue'
 import Vuetify from 'vuetify'
 import('@/../node_modules/vuetify/dist/vuetify.min.css')
+import('@/../node_modules/material-design-icons/iconfont/material-icons.css')
 import '@/assets/style.css'
 import App from './App'
 import router from './router'

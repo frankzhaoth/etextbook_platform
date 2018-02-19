@@ -1,40 +1,76 @@
 <template>
-	<div id="question" class="ma-3">
+	<div id="question">
 
-    <v-card flat>
-      <v-card-title primary-title>
-        <h5 class="headline">{{ question }}</h5>
-      </v-card-title>
-      <v-divider></v-divider>
-      <v-card-text>
-        <h6 v-html="body" class="subheading ml-4"></h6>
-      </v-card-text>
-      <v-card-text>
-        <h6 class="caption ml-0">By: {{ userName }}</h6>
-      </v-card-text>
-      <v-divider></v-divider>
-    </v-card>
+    <v-container fluid>
+      <v-card>
+        <v-layout>
+          
+          <v-flex xs2 sm1 md1 lg1>
+            <v-layout align-center column>
+              <i class="material-icons">arrow_drop_up</i>
+              <h6 class="subheading">2</h6>
+              <i class="material-icons">arrow_drop_down</i>
+            </v-layout>
+          </v-flex>
+         
+          <v-flex xs10 sm11 md11 lg11>
+            <v-card-title primary-title>
+              <h5 class="headline">{{ question }}</h5>
+            </v-card-title>
+            <v-divider></v-divider>
+            <v-card-text>
+              <h6 v-html="body" class="subheading"></h6>
+            </v-card-text>
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <h6 class="caption ml-0">By: {{ userName }}</h6>
+            </v-card-actions>
+          </v-flex>
+        
+        </v-layout>
+      </v-card>
+    </v-container>
 
-    <v-subheader>
-      <h6 class="title" v-if="answers.length > 0">Answers</h6>
-    </v-subheader>
-    <v-card v-for="answer in answers" :key="answer.answer" flat>
-      <v-card-text>
-        <h6 v-html="answer.answer" class="subheading ml-0"></h6>
-      </v-card-text>
-      <v-card-text>
-        <h6 class="caption ml-0">By: {{ answer.userName }}</h6>
-      </v-card-text>
-      <v-divider></v-divider>
-    </v-card>
+    <v-container fluid v-if="answers.length > 0">     
+      <v-subheader>
+        <h6 class="title">Answers</h6>
+      </v-subheader>
 
-    <v-subheader>
-      <h6 class="title">Your Answer</h6>
-    </v-subheader>
-    <v-card flat>
-      <vue-editor v-model="answer" :editorToolbar="customToolbar"></vue-editor>
-      <v-btn flat color="primary" @click="submitAnswer">Submit</v-btn>
-    </v-card>
+      <v-card v-for="answer in answers" :key="answer.answer" class="mb-3">
+        <v-layout>
+          <v-flex xs2 sm1 md1 lg1>
+            <v-layout align-center column>
+              <i class="material-icons">arrow_drop_up</i>
+              <h6 class="subheading">2</h6>
+              <i class="material-icons">arrow_drop_down</i>
+            </v-layout>
+          </v-flex>
+
+          <v-flex xs10 sm11 md11 lg11>
+            <v-card-text>
+              <h6 v-html="answer.answer" class="subheading ml-0"></h6>
+            </v-card-text>
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <h6 class="caption ml-0">By: {{ answer.userName }}</h6>
+            </v-card-actions>
+          </v-flex>
+        </v-layout>
+      </v-card>
+    </v-container>
+
+    <v-container fluid>
+      <v-subheader>
+        <h6 class="title">Your Answer</h6>
+      </v-subheader>
+      <v-card>
+        <vue-editor v-model="answer" :editorToolbar="customToolbar"></vue-editor>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn flat color="primary" @click="submitAnswer">Submit</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-container>
 		
 	</div>
 </template>
@@ -120,9 +156,8 @@ export default {
   },
 
   beforeDestroy: function() {
-    let self = this;
-    let textbookId = self.$route.params.textbookId;
-    let questionId = self.$route.params.questionId;
+    let textbookId = this.$route.params.textbookId;
+    let questionId = this.$route.params.questionId;
 
     let qRef = firebase.database().ref('/forum/' + textbookId + '/' + questionId);
     qRef.off();
