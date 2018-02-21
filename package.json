@@ -14,6 +14,7 @@
     "build": "node build/build.js"
   },
   "dependencies": {
+    "anchorme": "^1.1.2",
     "element-ui": "^2.0.11",
     "firebase": "^4.8.1",
     "font-awesome": "^4.7.0",
@@ -21,7 +22,10 @@
     "semantic-ui-vue": "^0.1.1",
     "vue": "^2.5.2",
     "vue-material": "^1.0.0-beta-7",
+    "vue-pdf": "^3.2.1",
     "vue-router": "^3.0.1",
+    "vue-spinner": "^1.0.3",
+    "vue2-editor": "^2.4.2",
     "vuetify": "^0.17.6"
   },
   "devDependencies": {
