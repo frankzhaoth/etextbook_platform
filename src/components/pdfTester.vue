@@ -1,6 +1,6 @@
 <template>
   <v-container fill-height fluid id="pdfViewer">
-    <v-layout row wrap align-center>
+    <v-layout row wrap>
       <v-flex xs12 class="tools">
           <div class="pageShift">
             <span v-on:click="prevPage"><v-icon>fa-chevron-left</v-icon></span>
@@ -20,9 +20,34 @@
           </div>
         </v-flex>
       </v-flex>
-      <v-flex xs12 sm10 offset-sm1>
-      <clip-loader :loading="!src" :color="'#7c7c7c'" :size="size"></clip-loader>
-      <pdf ref="pdf" :src="src" :page="page" :rotate="rotate" @password="password" @progress="loadedRatio = $event" @error="error" @num-pages="numPages = $event"></pdf>
+      <v-flex xs2 sm2 id="notes">
+        <p class="subheading">Notes - Page {{page}}</p>
+        <span>All</span>
+        <v-divider></v-divider>
+        <v-flex xs12>
+          <v-card class="new" v-bind:style="{ backgroundColor: '#' + selectedColour}">
+            <v-card-title>
+              <textarea @keyup.enter="addNote" v-model="newNote" placeholder="New note..."></textarea>
+              <span v-if="newNote" v-on:click="addNote" style="position: absolute; bottom: 10px; right: 16px; color: #313DB2; cursor: pointer;">Add</span>
+            </v-card-title>
+            <v-card-actions>
+              <span v-for="(colour, index) in colours" v-bind:style="{ backgroundColor: '#' + colour}" v-bind:class="{selected: selectedColour === colour}"
+              v-on:click="selectedColour = colour"> 
+              </span>
+            </v-card-actions>
+          </v-card>
+          <v-card v-for="(note, key) in notes"  v-bind:style="{ backgroundColor: '#' + note.colour}">
+            <v-icon v-on:click="deleteNote(key)">fa-trash</v-icon>
+            <v-card-title>
+              <p v-html="getAnchormeText(note.text)"></p>
+            </v-card-title>
+          </v-card>
+
+        </v-flex>
+      </v-flex>
+      <v-flex xs10 sm10>
+        <clip-loader :loading="!src" :color="'#7c7c7c'" :size="size"></clip-loader>
+        <pdf ref="pdf" :src="src" :page="page" :rotate="rotate" @password="password" @progress="loadedRatio = $event" @error="error" @num-pages="numPages = $event"></pdf>
       </v-flex>
     </v-layout>
   </v-container>
@@ -31,6 +56,7 @@
 import firebase from 'firebase'
 import pdf from 'vue-pdf'
 import ClipLoader from 'vue-spinner/src/ClipLoader.vue'
+import anchorme from "anchorme"
 
 export default {
   name: 'pdfTester',
@@ -54,10 +80,17 @@ export default {
       page: 1,
       numPages: 0,
       rotate: 0,
-      textbook: {}
+      textbook: {},
+      newNote: '',
+      notes: {},
+      colours: ['FFF9A2', '6FC0F7', 'EAB9EA', 'A5E7F9', 'D9F9A5'],
+      selectedColour: 'FFF9A2'
     }
   },
   methods: {
+    getAnchormeText: function(text) {
+      return anchorme(text);
+    },
     prevPage: function() {
       if (this.page > 1)
         this.page -= 1;
@@ -66,10 +99,52 @@ export default {
       if (this.page < this.numPages)
         this.page += 1;
     },
+    addNote: function() {
+      let currentUser = firebase.auth().currentUser.uid;
+      let self = this;
+
+      firebase.database().ref('/users/' + currentUser + '/notes/' + this.$route.params.textbookId + '/' + this.page).push({
+        'text': this.newNote,
+        'colour': self.selectedColour
+      });
+      this.newNote = '';
+    },
+    deleteNote: function(key) {
+      let currentUser = firebase.auth().currentUser.uid;
+      firebase.database().ref('/users/' + currentUser + '/notes/' + this.$route.params.textbookId + '/' + this.page + '/' + key).remove();
+    },
+  },
+  watch: {
+    // whenever question changes, this function will run
+    page: function (newPage, oldPage) {
+      // Get notes from firebase
+      let currentUser = firebase.auth().currentUser.uid;
+      let self = this;
+
+      let ref = firebase.database().ref('/users/' + currentUser + '/notes/' + this.$route.params.textbookId + '/' + this.page);
+      ref.on("value", function(snapshot) {
+        self.notes = snapshot.val();
+      }, 
+      function (errorObject) {
+        console.log(error);
+      });
+    },
   },
   created: function() {
-    // Reads the textbooks from the database and populates the textbooks array
+    
+    let currentUser = firebase.auth().currentUser.uid;
     let self = this;
+
+    // Get notes from firebase
+    let ref = firebase.database().ref('/users/' + currentUser + '/notes/' + this.$route.params.textbookId + '/' + this.page);
+    ref.on("value", function(snapshot) {
+      self.notes = snapshot.val();
+    }, 
+    function (errorObject) {
+      console.log(error);
+    });
+
+    // Reads the textbooks from the database and populates the textbooks array
     firebase.database().ref('/textbooks/' + this.$route.params.textbookId).once('value')
     .then(function(textbook) {
       if (textbook.exists()) {
@@ -77,11 +152,11 @@ export default {
           let storage = firebase.storage();
           let pathRef = storage.ref("textbooks/" + textbookData.url);
 
-          console.log(pathRef);
+          //console.log(pathRef);
 
           pathRef.getDownloadURL().then(function(url) {
             self.src = url;
-            console.log(self.src);
+            //console.log(self.src);
           });
       }
     })
@@ -101,7 +176,6 @@ export default {
   #pdfViewer .tools {
     background: #F2F1EF;
     padding: 10px 20px;
-    margin-bottom: 10px;
     position: -webkit-sticky;
     position: sticky;
     top: -1px;
@@ -133,6 +207,7 @@ export default {
   #pdfViewer .tools .pageShift select {
     border: 1px solid #ABB7B7;
     padding: 0px 10px;
+    background: #FFF;
   }
 
   #pdfViewer .tools .pageNumber {
@@ -151,15 +226,82 @@ export default {
     cursor: pointer;
   }
 
-  #dashboard h2 {
-    margin-bottom: 0;
-    margin-top: 20px;
-    font-weight: 400;
+  #pdfViewer #notes {
+    background: #EFEFEF;
+    padding: 5px 10px;
+    border-right: 1px solid #ABB7B7;
   }
 
-  #dashboard .loader {
-    color: #666;
-    text-align: center;
+  #pdfViewer #notes > p.subheading {
+    margin-bottom: 5px;
+    width: calc(100% - 20px);
+    display: inline-block;
+  }
+
+  #pdfViewer #notes > span {
+    font-size: .9rem;
+  }
+
+  #pdfViewer #notes .fa-angle-left {
+    font-size: 20px;
+    display: inline-block;
+    cursor: pointer;
+    vertical-align: top;
+  }
+
+  #pdfViewer #notes .card {
+    margin-top: 5px;
+  }
+
+  #pdfViewer #notes .card p {
+    font-size: .9rem;
+    line-height: 130%;
+    word-break: break-all;
+  }
+
+  #pdfViewer #notes .card i.fa-trash {
+    position: absolute;
+    font-size: 10px;
+    right: 5px;
+    top: 5px;
+    cursor: pointer;
+  }
+
+  #pdfViewer #notes .card.new {
+    padding-bottom: 10px;
+    background: #f7f7f7;
+  }
+
+  #pdfViewer #notes .card.new textarea {
+    height: 6rem;
+    resize: none;
+    font-size: .9rem;
+    line-height: 130%;
+  }
+
+  #pdfViewer #notes .card.new textarea:focus {
+    outline: none;
+    border: none;
+  }
+
+  #pdfViewer #notes .card.new .card__actions {
+    padding-top: 10px;
+    padding-bottom: 0;
+    border-top: 1px solid #DAD9DB;
+  }
+
+  #pdfViewer #notes .card.new .card__actions span {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid #DAD9DB;
+    cursor: pointer;
+    opacity: .6;
+  }
+
+  #pdfViewer #notes .card.new .card__actions span.selected {
+    border: 2px solid #777;
+    opacity: 1;
   }
 
 </style>
