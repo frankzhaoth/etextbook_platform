@@ -1,12 +1,24 @@
 <template>
-  <div id="newquestion" class="ma-3">
-  	<v-card flat>
-    	<v-card-text>
-        <v-text-field v-model="question" label="Question"></v-text-field>
-        <vue-editor v-model="body" :editorToolbar="customToolbar"></vue-editor>
-      </v-card-text>
-      <v-btn flat color="primary" @click="submit">Submit</v-btn>
-    </v-card>
+  <div id="newquestion">
+    <v-container fluid>
+    	
+      <v-card flat>
+        <v-layout>
+          <v-flex>
+          	<v-card-text>
+              <v-text-field v-model="question" label="Question"></v-text-field>
+              <vue-editor v-model="body" :editorToolbar="customToolbar"></vue-editor>
+            </v-card-text>
+            
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn flat color="pink darken-3" @click="submit">Submit</v-btn>
+            </v-card-actions>
+          </v-flex>
+        </v-layout>
+      </v-card>
+
+    </v-container>
   </div>
 </template>
 

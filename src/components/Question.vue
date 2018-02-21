@@ -69,7 +69,7 @@
       </v-card>
     </v-container>
 
-    <v-container fluid>
+    <v-container fluid v-if="!isAnswered">
       <v-subheader>
         <h6 class="title">Your Answer</h6>
       </v-subheader>
@@ -101,6 +101,7 @@ export default {
     return {
       currentUserId: '',
       currentUserAnswer: '',
+      isAnswered: false,
       question: '',
       questionAnswers: [],
       voted: 'pink darken-3',
@@ -126,13 +127,16 @@ export default {
       let questionId = this.$route.params.questionId;
       let userId = this.currentUserId;
 
-      // Get the name of the user
+      let self = this;
+      
+      // Get the name of the user and store the answer on the database
       firebase.database().ref('/users/' + userId).once('value').then(function(user) {
         let userName = user.val().name;
         let aRef = firebase.database().ref('/forum/' + textbookId + '/' + questionId + '/answers/' + userId);
         aRef.set({
           'userName': userName,
-          'answer': this.answer
+          'userId': userId,
+          'answer': self.currentUserAnswer
         });
       });     
     },
@@ -298,23 +302,31 @@ export default {
           'questionUserId': questionData.userId
         };
 
-        // Get the votes of the question and initialize the question votes
+        // Get the votes of the question
         let votes = questionData.votes;
         let questionVotes = self.initializeQuestionVotes(votes);
         self.question.voteScore = questionVotes.voteScore;
         self.question.isUpvoted = questionVotes.isUpvoted;
         self.question.isDownvoted = questionVotes.isDownvoted;
 
-        // Get the answers of the question, the votes of each answer, and initialize them
+        // Get the answers of the question and the votes of each answer
         let answers = questionData.answers; 
-        Object.keys(answers).forEach(function(answerKey) {
-          answers[answerKey].answerId = answerKey;
-          let answerVotes = self.initializeAnswerVotes(answers[answerKey].votes);
-          answers[answerKey].voteScore = answerVotes.voteScore;
-          answers[answerKey].isUpvoted = answerVotes.isUpvoted;
-          answers[answerKey].isDownvoted = answerVotes.isDownvoted;
-          self.questionAnswers.push(answers[answerKey]);
-        });
+
+        if (answers != null) {
+          Object.keys(answers).forEach(function(answerKey) {
+            answers[answerKey].answerId = answerKey;
+            let answerVotes = self.initializeAnswerVotes(answers[answerKey].votes);
+            answers[answerKey].voteScore = answerVotes.voteScore;
+            answers[answerKey].isUpvoted = answerVotes.isUpvoted;
+            answers[answerKey].isDownvoted = answerVotes.isDownvoted;
+            self.questionAnswers.push(answers[answerKey]);
+
+            // If the current user answered the question, set the isAnswered flag
+            if (answers[answerKey].userId === self.currentUserId) {
+              self.isAnswered = true;
+            }
+          });
+        }
       }
     });
   },

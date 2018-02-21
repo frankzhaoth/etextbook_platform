@@ -1,7 +1,7 @@
 <template>
   <div id="forum" class="ma-3">
     <div>
-      <v-btn color="primary" @click="clickNewQuestion" flat>New Question</v-btn>
+      <v-btn color="pink darken-3" @click="clickNewQuestion" flat>New Question</v-btn>
     </div>
 
     <v-data-table
@@ -12,6 +12,7 @@
     >
       <template slot="items" slot-scope="props">
       	<tr @click="clickQuestion(props.item.qId)">
+          <td> {{ props.item.voteScore }}</td>
           <td>{{ props.item.question }}</td>
           <td class="text-xs-right">{{ props.item.userName }}</td>
         </tr>
@@ -35,6 +36,12 @@ export default {
   data () {
     return {
       headers: [
+        {
+          text: 'Upvotes',
+          align: 'left',
+          sortable: true,
+          value: 'voteScore'
+        },
         {
           text: 'Question', 
           align: 'left',
@@ -70,12 +77,23 @@ export default {
       	questions.forEach(function(question) {
       	  let questionData = question.val();
       	  let questionKey = question.key;
+          let questionVotes = questionData.votes;
+
+          // Calculate the vote score of a question 
+          let voteScore = 0;
+
+          if (questionVotes != null) {
+            Object.keys(questionVotes).forEach(function(voteKey) {
+              voteScore += questionVotes[voteKey].vote;
+            });
+          }
       	  
       	  self.items.push({
-      	  	question: questionData.question,
-            userName: questionData.userName,
-      	  	userId: questionData.userId,
-      	  	qId: questionKey
+      	  	'question': questionData.question,
+            'userName': questionData.userName,
+      	  	'userId': questionData.userId,
+      	  	'qId': questionKey,
+            'voteScore': voteScore
       	  });
       	});   
       }
