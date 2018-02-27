@@ -1,6 +1,6 @@
 <template>
   <v-toolbar flat style="background: #9A3658;" >
-    <v-toolbar-title style="line-height: 64px;"><img id="logo" src="static/logo_white.png" /></v-toolbar-title>
+    <v-toolbar-title style="line-height: 64px;"><img v-on:click="goHome" id="logo" src="static/logo_white.png" /></v-toolbar-title>
     <v-spacer></v-spacer>
     <p class="white--text" style="line-height: 64px; margin: 0; font-weight: 400;">{{name}}</p>
     <v-menu>
@@ -47,7 +47,7 @@ export default {
       });
     },
     goHome: function() {
-      this.$router.replace('dashboard');
+      this.$router.replace('/dashboard');
     }
   },
   computed: {
@@ -70,6 +70,7 @@ export default {
   #logo {
     height: 40px;
     vertical-align: middle;
+    cursor: pointer;
   }
   .avatar {
     text-align: center;
