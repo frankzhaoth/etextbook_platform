@@ -1,7 +1,7 @@
 <template>
 	<div id="question" class="ma-3">
 
-    <v-card flat>
+    <v-card flat class="question">
       <v-card-title primary-title>
         <h5 class="headline">{{ question }}</h5>
       </v-card-title>
@@ -18,7 +18,7 @@
     <v-subheader>
       <h6 class="title" v-if="answers.length > 0">Answers</h6>
     </v-subheader>
-    <v-card v-for="answer in answers" :key="answer.answer" flat>
+    <v-card class="answer" v-for="answer in answers" :key="answer.answer" flat>
       <v-card-text>
         <h6 v-html="answer.answer" class="subheading ml-0"></h6>
       </v-card-text>
@@ -42,7 +42,7 @@
 <script>
 
 import firebase from 'firebase'
-import { VueEditor } from 'vue2-editor'
+import { VueEditor, Quill } from 'vue2-editor'
 
 export default {
   name: 'question',
