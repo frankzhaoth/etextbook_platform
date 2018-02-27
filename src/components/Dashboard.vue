@@ -8,10 +8,10 @@
         </v-flex>
         <v-flex xs6 sm3 md2 lg2 v-for="favourite in favourites">
           <v-card>
-            <v-card-media v-on:click="clickTextbook(favourite)" :src="favourite.cover" height="200px"></v-card-media>
+            <v-card-media v-on:click="clickTextbook(favourite.key)" :src="favourite.cover" height="200px"></v-card-media>
             <v-card-title>{{favourite.title}}</v-card-title>
             <v-card-actions>
-                <v-icon v-on:click="toggleFavourite(favourite.key)" class="mr-2 ml-2">fa-star-o</v-icon>
+                <v-icon v-on:click="toggleFavourite(favourite.key)" class="mr-2 ml-2" style="color: #1976D2;">fa-star</v-icon>
                 <v-icon v-on:click="viewTextbook(favourite.key)" class="mr-2 ml-2">fa-eye</v-icon>
             </v-card-actions>
           </v-card>
