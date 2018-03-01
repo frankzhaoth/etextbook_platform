@@ -17,13 +17,22 @@
             <v-icon small v-on:click="rotate -= 90">fa-rotate-left</v-icon>
             <v-icon small v-on:click="rotate += 90">fa-rotate-right</v-icon>
             <v-icon small v-on:click="$refs.pdf.print()">fa-print</v-icon>
+            <v-icon small v-on:click="logContent">fa-pencil</v-icon>
           </div>
         </v-flex>
       </v-flex>
       <v-flex xs2 sm2 id="notes">
         <p class="subheading">Notes - Page {{page}}</p>
-        <span>All</span>
+        <!--<span>All</span>-->
         <v-divider></v-divider>
+        <v-select
+          :items="['All', 'Me', 'Anmol Singh']"
+          label="Filter by author"
+          single-line
+          dense
+          bottom
+        ></v-select>
+
         <v-flex xs12>
           <v-card class="new" v-bind:style="{ backgroundColor: '#' + selectedColour}">
             <v-card-title>
@@ -41,6 +50,7 @@
             <v-card-title>
               <p v-html="getAnchormeText(note.text)"></p>
             </v-card-title>
+            <span class="author">Created by: Anmol Singh</span>
           </v-card>
 
         </v-flex>
@@ -66,15 +76,6 @@ export default {
   },
   data () {
     return {
-      pdfList: [
-        '',
-        'https://cdn.mozilla.net/pdfjs/tracemonkey.pdf',
-        'https://cdn.rawgit.com/mozilla/pdf.js/c6e8ca86/test/pdfs/freeculture.pdf',
-        'https://cdn.rawgit.com/mozilla/pdf.js/c6e8ca86/test/pdfs/annotation-link-text-popup.pdf',
-        'https://cdn.rawgit.com/mozilla/pdf.js/c6e8ca86/test/pdfs/calrgb.pdf',
-        'https://cdn.rawgit.com/sayanee/angularjs-pdf/68066e85/example/pdf/relativity.protected.pdf',
-        'data:application/pdf;base64,JVBERi0xLjUKJbXtrvsKMyAwIG9iago8PCAvTGVuZ3RoIDQgMCBSCiAgIC9GaWx0ZXIgL0ZsYXRlRGVjb2RlCj4+CnN0cmVhbQp4nE2NuwoCQQxF+/mK+wMbk5lkHl+wIFislmIhPhYEi10Lf9/MVgZCAufmZAkMppJ6+ZLUuFWsM3ZXxvzpFNaMYjEriqpCtbZSBOsDzw0zjqPHZYtTrEmz4eto7/0K54t7GfegOGCBbBdDH3+y2zsMsVERc9SoRkXORqKGJupS6/9OmMIUfgypJL4KZW5kc3RyZWFtCmVuZG9iago0IDAgb2JqCiAgIDEzOAplbmRvYmoKMiAwIG9iago8PAogICAvRXh0R1N0YXRlIDw8CiAgICAgIC9hMCA8PCAvQ0EgMC42MTE5ODcgL2NhIDAuNjExOTg3ID4+CiAgICAgIC9hMSA8PCAvQ0EgMSAvY2EgMSA+PgogICA+Pgo+PgplbmRvYmoKNSAwIG9iago8PCAvVHlwZSAvUGFnZQogICAvUGFyZW50IDEgMCBSCiAgIC9NZWRpYUJveCBbIDAgMCA1OTUuMjc1NTc0IDg0MS44ODk3NzEgXQogICAvQ29udGVudHMgMyAwIFIKICAgL0dyb3VwIDw8CiAgICAgIC9UeXBlIC9Hcm91cAogICAgICAvUyAvVHJhbnNwYXJlbmN5CiAgICAgIC9DUyAvRGV2aWNlUkdCCiAgID4+CiAgIC9SZXNvdXJjZXMgMiAwIFIKPj4KZW5kb2JqCjEgMCBvYmoKPDwgL1R5cGUgL1BhZ2VzCiAgIC9LaWRzIFsgNSAwIFIgXQogICAvQ291bnQgMQo+PgplbmRvYmoKNiAwIG9iago8PCAvQ3JlYXRvciAoY2Fpcm8gMS4xMS4yIChodHRwOi8vY2Fpcm9ncmFwaGljcy5vcmcpKQogICAvUHJvZHVjZXIgKGNhaXJvIDEuMTEuMiAoaHR0cDovL2NhaXJvZ3JhcGhpY3Mub3JnKSkKPj4KZW5kb2JqCjcgMCBvYmoKPDwgL1R5cGUgL0NhdGFsb2cKICAgL1BhZ2VzIDEgMCBSCj4+CmVuZG9iagp4cmVmCjAgOAowMDAwMDAwMDAwIDY1NTM1IGYgCjAwMDAwMDA1ODAgMDAwMDAgbiAKMDAwMDAwMDI1MiAwMDAwMCBuIAowMDAwMDAwMDE1IDAwMDAwIG4gCjAwMDAwMDAyMzAgMDAwMDAgbiAKMDAwMDAwMDM2NiAwMDAwMCBuIAowMDAwMDAwNjQ1IDAwMDAwIG4gCjAwMDAwMDA3NzIgMDAwMDAgbiAKdHJhaWxlcgo8PCAvU2l6ZSA4CiAgIC9Sb290IDcgMCBSCiAgIC9JbmZvIDYgMCBSCj4+CnN0YXJ0eHJlZgo4MjQKJSVFT0YK',
-      ],
       src:'',
       loadedRatio: 0,
       page: 1,
@@ -98,6 +99,27 @@ export default {
     nextPage: function() {
       if (this.page < this.numPages)
         this.page += 1;
+    },
+    logContent: function() {
+      let self = this;
+      console.log(this.$refs.pdf.pdf.getCurrentPage());
+
+      this.$refs.pdf.pdf.getCurrentPage().getTextContent().then(function(content) {
+          var text = content.items.map(item => item.str);
+          console.log(text);
+        })
+      //this.$refs.pdf.pdf.forEachPage(function(page) {
+      //  console.log(page);
+      //});
+      //this.$refs.pdf.getPage(self.page).then(function(page) {
+      //  console.log(page)
+      //});
+      //this.$refs.pdf.pdf.forEachPage(function(page) {
+      //  return page.getTextContent().then(function(content) {
+      //    var text = content.items.map(item => item.str);
+      //    console.log(page);
+      //  })
+      //});
     },
     addNote: function() {
       let currentUser = firebase.auth().currentUser.uid;
@@ -265,6 +287,14 @@ export default {
     right: 5px;
     top: 5px;
     cursor: pointer;
+  }
+
+  #pdfViewer #notes .card span.author {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    font-size: 8px;
+    color: #555;
   }
 
   #pdfViewer #notes .card.new {
