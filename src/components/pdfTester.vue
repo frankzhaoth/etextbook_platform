@@ -45,8 +45,15 @@
               </span>
             </v-card-actions>
           </v-card>
+
+          <!-- Notes start here -->
           <v-card v-for="(note, key) in notes"  v-bind:style="{ backgroundColor: '#' + note.colour}">
             <v-icon v-on:click="deleteNote(key)">fa-trash</v-icon>
+            <v-icon @click="toggleShare"  class="shareF" small right color="blue darken-4">chat</v-icon>
+
+            <v-flex xs8 v-if="addFriend">
+              <v-text-field @keyup.enter="shareNote(note)" v-model="friend" label="Friend's email"  clearable></v-text-field>
+            </v-flex>
             <v-card-title>
               <p v-html="getAnchormeText(note.text)"></p>
             </v-card-title>
@@ -85,7 +92,9 @@ export default {
       newNote: '',
       notes: {},
       colours: ['FFF9A2', '6FC0F7', 'EAB9EA', 'A5E7F9', 'D9F9A5'],
-      selectedColour: 'FFF9A2'
+      selectedColour: 'FFF9A2',
+      friend: '',
+      addFriend: false
     }
   },
   methods: {
@@ -134,6 +143,44 @@ export default {
     deleteNote: function(key) {
       let currentUser = firebase.auth().currentUser.uid;
       firebase.database().ref('/users/' + currentUser + '/notes/' + this.$route.params.textbookId + '/' + this.page + '/' + key).remove();
+    },
+    toggleShare: function() {
+      if(this.addFriend == false)
+        this.addFriend = true;
+      else
+        this.addFriend = false;
+    },
+    shareNote: function(note) {
+      let self = this;
+      let currentUser = firebase.auth().currentUser.uid;
+      let name;
+      firebase.database().ref('/users/' + currentUser).once('value')
+      .then(function(snapshot) {
+        name =  snapshot.val().name;
+      });
+      firebase.database().ref('/users/')
+      .once('value', function(snapshot) {
+        snapshot.forEach(function(childSnapshot) {
+          var childKey = childSnapshot.key;
+          var childData = childSnapshot.val();
+          // ...
+          if(self.friend == childData.email){
+            console.log("Friend email: " + self.friend);
+            console.log("childData: " + childData.email);
+            // friend's email matches, add the required data
+            firebase.database().ref('/users/' + childKey + '/friends/' + currentUser + '/notes/').child(self.$route.params.textbookId + '/' + self.page)
+            .push({
+              'text': note.text,
+              'colour': note.colour,
+              'Writer': name
+            })
+          }
+        });
+      });
+
+      //self.friend = '';
+
+
     },
   },
   watch: {
@@ -332,6 +379,10 @@ export default {
   #pdfViewer #notes .card.new .card__actions span.selected {
     border: 2px solid #777;
     opacity: 1;
+  }
+
+  .shareF {
+    cursor: pointer;
   }
 
 </style>
