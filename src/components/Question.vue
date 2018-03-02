@@ -53,6 +53,27 @@
               @click="downvoteAnswer(answer.answerId, index)">
                 <v-icon large>fa-caret-down</v-icon>
               </v-btn>
+
+              <v-btn 
+                v-if="currentUserId === question.questionUserId && question.questionAcceptedAnswer == null" 
+                flat color="grey" icon slot="activator" 
+                @click="acceptAnswer(answer.answerId)">
+                <v-icon large>fas fa-check</v-icon>
+              </v-btn>
+
+              <v-btn 
+                v-if="currentUserId === question.questionUserId 
+                      && question.questionAcceptedAnswer === answer.answerId" 
+                flat color="pink darken-3" icon slot="activator" 
+                @click="unacceptAnswer(answer.answerId)">
+                <v-icon large>fas fa-check</v-icon>
+              </v-btn>
+ 
+              <v-icon v-if="currentUserId != question.questionUserId 
+              && question.questionAcceptedAnswer === answer.answerId"
+              large color="pink darken-3">fas fa-check</v-icon>
+              
+
             </v-layout>
           </v-flex>
 
@@ -271,6 +292,28 @@ export default {
         };
 
       return answerVotes;
+    },
+
+    acceptAnswer: function(answerId) {
+      let textbookId = this.$route.params.textbookId;
+      let questionId = this.$route.params.questionId;
+
+      let ref = firebase.database().ref('/forum/' + textbookId + '/' + questionId);
+
+      ref.update({
+        'accepted': answerId 
+      });
+    },
+
+    unacceptAnswer: function(answerId) {
+      let textbookId = this.$route.params.textbookId;
+      let questionId = this.$route.params.questionId;
+
+      let ref = firebase.database().ref('/forum/' + textbookId + '/' + questionId);
+
+      ref.update({
+        'accepted': null 
+      });
     }
   },
 
@@ -299,9 +342,10 @@ export default {
           'question': questionData.question,
           'questionBody': questionData.body,
           'questionUserName': questionData.userName,
-          'questionUserId': questionData.userId
+          'questionUserId': questionData.userId,
+          'questionAcceptedAnswer': questionData.accepted
         };
-
+        
         // Get the votes of the question
         let votes = questionData.votes;
         let questionVotes = self.initializeQuestionVotes(votes);
