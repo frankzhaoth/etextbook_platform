@@ -23,7 +23,12 @@
       </v-flex>
       <v-flex xs2 sm2 id="notes">
         <p class="subheading">Notes - Page {{page}}</p>
-        <!--<span>All</span>-->
+        <span>
+          <v-tooltip bottom>
+            <v-icon slot="activator" @click="">fa-share</v-icon>
+            <span>Share</span>
+          </v-tooltip>
+        </span>
         <v-divider></v-divider>
         <v-select
           :items="['All', 'Me', 'Anmol Singh']"
@@ -307,8 +312,23 @@ export default {
     display: inline-block;
   }
 
+  #pdfViewer #notes > .menu button {
+    width: 24px;
+    height: 24px;
+    margin: 0;
+  }
+
+  #pdfViewer #notes > .menu button i {
+    font-size: 16px;
+  }
+
   #pdfViewer #notes > span {
     font-size: .9rem;
+  }
+
+  #pdfViewer #notes > span i {
+    font-size: .9rem;
+    cursor: pointer;
   }
 
   #pdfViewer #notes .fa-angle-left {
