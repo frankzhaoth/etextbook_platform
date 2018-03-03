@@ -1,6 +1,10 @@
 <template>
   <div id="newquestion">
     <v-container fluid>
+
+      <v-alert type="error" icon="error" transition="scale-transition" dismissible v-model="alert">
+        The question title or description is not present or less than 10 characters.
+      </v-alert>
     	
       <v-card flat>
         <v-layout>
@@ -38,6 +42,7 @@ export default {
     return {
       question: '',
       body: '',
+      alert: false,
       customToolbar: [  
         [{ 'header': [false, 1, 2, 3, 4, 5, 6, ] }],
         ['bold', 'italic', 'underline', 'strike'],        
@@ -54,6 +59,12 @@ export default {
 
   methods: {
   	submit: function() {
+
+      // If the input is not valid, return
+      if (!this.validateForm()) {
+        return;
+      }
+
   	  let self = this;
   	  let textbookId = self.$route.params.textbookId;
   	  let userId = firebase.auth().currentUser.uid;
@@ -79,7 +90,32 @@ export default {
   	  } else {
   	  	console.log("currentUser returned null");
   	  }
-  	}
+  	},
+
+    validateForm: function() {
+      let question = this.question;
+      let body = this.body; 
+
+      // Remove html tags from body
+      body = body.replace(/<\/?[^>]+(>|$)/g, "");
+      // Remove all spaces
+      body = body.replace(/\s/g,'');
+
+      if (question == "" || question.length < 10) {
+        this.alert = true;
+        return false;
+      } 
+
+      else if (body == "" || body.length < 10) {
+        this.alert = true;
+        return false;
+      } 
+
+      else {
+        this.alert = false;
+        return true;
+      }
+    }
   }
 }
 </script>
