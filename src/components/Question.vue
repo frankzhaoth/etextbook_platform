@@ -53,7 +53,6 @@
             v-model="sort"
             label="Sort By"
             class="input-group--focused"
-            @change="sortAnswers"
           ></v-select>
         </v-flex>
       </v-subheader>
@@ -152,11 +151,8 @@ export default {
       questionAnswers: [],
       voted: 'pink darken-3',
       notVoted: 'grey',
-      sortItems: [
-        {text: 'Upvotes', value: 'Upvotes'},
-        {text: 'Most Recent', value: 'Most Recent'}
-      ],
-      sort: {text: 'Upvotes', value: 'Upvotes'},
+      sortItems: ['Upvotes', 'Most Recent'],
+      sort: null,
       customToolbar: [  
         [{ 'header': [false, 1, 2, 3, 4, 5, 6, ] }],
         ['bold', 'italic', 'underline', 'strike'],        
@@ -346,10 +342,13 @@ export default {
         'accepted': null 
       });
     },
+  },
 
-    sortAnswers: function() {
+  watch: {
+    // whenever question changes, this function will run
+    sort: function (newSelection, oldSelection) {
       
-      if (this.sort.text === 'Upvotes') {
+      if (this.sort === 'Upvotes') {
         this.questionAnswers.sort(function(answerA, answerB) {
           let upvotesA = answerA.voteScore;
           let upvotesB = answerB.voteScore;
@@ -451,9 +450,6 @@ export default {
             }
           });
         }
-
-        // Sort the answers according to the default: by upvotes
-        self.sortAnswers();
       }
     });
   },
