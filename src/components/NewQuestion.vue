@@ -6,7 +6,7 @@
         <v-layout>
           <v-flex>
           	<v-card-text>
-              <v-text-field v-model="question" label="Question"></v-text-field>
+              <v-text-field v-model="question" label="Question" color="pink darken-3"></v-text-field>
               <vue-editor v-model="body" :editorToolbar="customToolbar"></vue-editor>
             </v-card-text>
             
@@ -69,7 +69,8 @@ export default {
           'question': self.question,
           'body': self.body,
           'userName': userName,
-          'userId': userId
+          'userId': userId,
+          'date': firebase.database.ServerValue.TIMESTAMP
           });
 
           // Redirect to the question page

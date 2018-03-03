@@ -4,7 +4,6 @@
     <v-container fluid>
       <v-card>
         <v-layout>
-          
           <v-flex xs2 sm1 md1 lg1>
             <v-layout align-center column>
               <v-btn flat :color="question.isUpvoted" icon slot="activator" @click="upvoteQuestion">
@@ -25,19 +24,38 @@
             <v-card-text>
               <h6 v-html="question.questionBody" class="subheading"></h6>
             </v-card-text>
+          </v-flex>
+        </v-layout>
+
+        <v-layout>
+          <v-flex>
             <v-card-actions>
               <v-spacer></v-spacer>
               <h6 class="caption ml-0">By: {{ question.questionUserName }}</h6>
+              <h6 class="caption ml-0">{{ question.questionDate }}</h6>
             </v-card-actions>
           </v-flex>
-        
         </v-layout>
+
       </v-card>
     </v-container>
 
     <v-container fluid v-if="questionAnswers.length > 0">     
       <v-subheader>
-        <h6 class="title">Answers</h6>
+        <v-flex xs6 sm9 md10 lg10>
+          <h6 class="title">Answers</h6>
+        </v-flex>
+
+        <v-flex xs6 sm3 md2 lg2>
+          <v-select
+            color="pink darken-3"
+            :items="sortItems"
+            v-model="sort"
+            label="Sort By"
+            class="input-group--focused"
+            @change="sortAnswers"
+          ></v-select>
+        </v-flex>
       </v-subheader>
 
       <v-card v-for="(answer, index) in questionAnswers" :key="answer.answerId" class="mb-3">
@@ -72,8 +90,6 @@
               <v-icon v-if="currentUserId != question.questionUserId 
               && question.questionAcceptedAnswer === answer.answerId"
               large color="pink darken-3">fas fa-check</v-icon>
-              
-
             </v-layout>
           </v-flex>
 
@@ -81,12 +97,19 @@
             <v-card-text>
               <h6 v-html="answer.answer" class="subheading ml-0"></h6>
             </v-card-text>
+          </v-flex>
+        </v-layout>
+
+        <v-layout>
+          <v-flex>
             <v-card-actions>
               <v-spacer></v-spacer>
               <h6 class="caption ml-0">By: {{ answer.userName }}</h6>
+              <h6 class="caption ml-0">{{ answer.anwserDate }}</h6>
             </v-card-actions>
           </v-flex>
         </v-layout>
+
       </v-card>
     </v-container>
 
@@ -111,6 +134,8 @@
 import firebase from 'firebase'
 import { VueEditor } from 'vue2-editor'
 
+var moment = require('moment');
+
 export default {
   name: 'question',
 
@@ -127,6 +152,11 @@ export default {
       questionAnswers: [],
       voted: 'pink darken-3',
       notVoted: 'grey',
+      sortItems: [
+        {text: 'Upvotes', value: 'Upvotes'},
+        {text: 'Most Recent', value: 'Most Recent'}
+      ],
+      sort: {text: 'Upvotes', value: 'Upvotes'},
       customToolbar: [  
         [{ 'header': [false, 1, 2, 3, 4, 5, 6, ] }],
         ['bold', 'italic', 'underline', 'strike'],        
@@ -157,7 +187,8 @@ export default {
         aRef.set({
           'userName': userName,
           'userId': userId,
-          'answer': self.currentUserAnswer
+          'answer': self.currentUserAnswer,
+          'date': firebase.database.ServerValue.TIMESTAMP
         });
       });     
     },
@@ -314,6 +345,29 @@ export default {
       ref.update({
         'accepted': null 
       });
+    },
+
+    sortAnswers: function() {
+      
+      if (this.sort.text === 'Upvotes') {
+        this.questionAnswers.sort(function(answerA, answerB) {
+          let upvotesA = answerA.voteScore;
+          let upvotesB = answerB.voteScore;
+
+          // If answerA has more upvotes than answerB, give it a lower index
+          if (upvotesA > upvotesB) {
+            return -1;
+          } 
+
+          // If answerA has less upvotes than answerB, give it a higher index
+          if (upvotesA < upvotesB) {
+            return 1;
+          }
+
+          // If they are the same, then dont change any indexes 
+          return 0;
+        });
+      }
     }
   },
 
@@ -343,7 +397,8 @@ export default {
           'questionBody': questionData.body,
           'questionUserName': questionData.userName,
           'questionUserId': questionData.userId,
-          'questionAcceptedAnswer': questionData.accepted
+          'questionAcceptedAnswer': questionData.accepted,
+          'questionDate': moment(questionData.date).local().format("dddd, MMMM Do YYYY, h:mm:ss a")
         };
         
         // Get the votes of the question
@@ -363,6 +418,7 @@ export default {
             answers[answerKey].voteScore = answerVotes.voteScore;
             answers[answerKey].isUpvoted = answerVotes.isUpvoted;
             answers[answerKey].isDownvoted = answerVotes.isDownvoted;
+            answers[answerKey].answerDate = moment(answers[answerKey].date).local().format("dddd, MMMM Do YYYY, h:mm:ss a");
             self.questionAnswers.push(answers[answerKey]);
 
             // If the current user answered the question, set the isAnswered flag
@@ -371,6 +427,9 @@ export default {
             }
           });
         }
+
+        // Sort the answers according to the default: by upvotes
+        self.sortAnswers();
       }
     });
   },
