@@ -105,7 +105,7 @@
             <v-card-actions>
               <v-spacer></v-spacer>
               <h6 class="caption ml-0">By: {{ answer.userName }}</h6>
-              <h6 class="caption ml-0">{{ answer.anwserDate }}</h6>
+              <h6 class="caption ml-0">{{ answer.answerDate }}</h6>
             </v-card-actions>
           </v-flex>
         </v-layout>
@@ -367,6 +367,30 @@ export default {
           // If they are the same, then dont change any indexes 
           return 0;
         });
+      }
+
+      else if (this.sort === "Most Recent") {
+        this.questionAnswers.sort(function(answerA, answerB) {
+          let dateA = answerA.date;
+          let dateB = answerB.date;
+
+          // If answerA is more recent than answerB, give it a lower index
+          if (moment(dateA).isAfter(moment(dateB))) {
+            return -1;
+          }
+
+          // If answerA is before answerB, give it a higher index
+          if (moment(dateA).isBefore(moment(dateB))) {
+            return 1;
+          }
+
+          // If they are the same, then dont change any indexes 
+          return 0;
+        });
+      }
+
+      else {
+        // Do nothing
       }
     }
   },
