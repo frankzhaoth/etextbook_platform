@@ -25,9 +25,12 @@
         <p class="subheading">Notes - Page {{page}}</p>
         <span>
           <v-tooltip bottom>
-            <v-icon slot="activator" @click="">fa-share</v-icon>
+            <v-icon slot="activator" @click="toggleShare">fa-share</v-icon>
             <span>Share</span>
           </v-tooltip>
+          <v-flex xs8 v-if="addFriend">
+              <v-text-field @keyup.enter="shareNote(note)" v-model="friend" label="Friend's email"  clearable></v-text-field>
+            </v-flex>
         </span>
         <v-divider></v-divider>
         <v-select
@@ -54,11 +57,8 @@
           <!-- Notes start here -->
           <v-card v-for="(note, key) in notes"  v-bind:style="{ backgroundColor: '#' + note.colour}">
             <v-icon v-on:click="deleteNote(key)">fa-trash</v-icon>
-            <v-icon @click="toggleShare"  class="shareF" small right color="blue darken-4">chat</v-icon>
 
-            <v-flex xs8 v-if="addFriend">
-              <v-text-field @keyup.enter="shareNote(note)" v-model="friend" label="Friend's email"  clearable></v-text-field>
-            </v-flex>
+            
             <v-card-title>
               <p v-html="getAnchormeText(note.text)"></p>
             </v-card-title>
@@ -158,32 +158,47 @@ export default {
     shareNote: function(note) {
       let self = this;
       let currentUser = firebase.auth().currentUser.uid;
-      let name;
+      let name, email;
+      let isFriend = false;
       firebase.database().ref('/users/' + currentUser).once('value')
       .then(function(snapshot) {
-        name =  snapshot.val().name;
+        let val = snapshot.val();
+        name =  val.name;
+        email = val.email;
+        if (val.friends.friend == self.friend)
+          isFriend = true;
       });
-      firebase.database().ref('/users/')
-      .once('value', function(snapshot) {
-        snapshot.forEach(function(childSnapshot) {
-          var childKey = childSnapshot.key;
-          var childData = childSnapshot.val();
-          // ...
-          if(self.friend == childData.email){
-            console.log("Friend email: " + self.friend);
-            console.log("childData: " + childData.email);
-            // friend's email matches, add the required data
-            firebase.database().ref('/users/' + childKey + '/friends/' + currentUser + '/notes/').child(self.$route.params.textbookId + '/' + self.page)
-            .push({
-              'text': note.text,
-              'colour': note.colour,
-              'Writer': name
-            })
-          }
+      if (!isFriend)
+      {
+        firebase.database().ref('/users/' + currentUser + '/friends/')
+        .set({
+          'friend' : self.friend
         });
-      });
 
-      //self.friend = '';
+        
+        firebase.database().ref('/users/').once('value', function(snapshot) {
+
+          snapshot.forEach(function(childSnapshot) {
+            var childKey = childSnapshot.key;
+            var childData = childSnapshot.val();
+
+        console.log("--- " + childData + " ---");
+        console.log("--- " + childSnapshot.val() + " ---");
+        // this returns empty object, although it shouldn't [Object object]
+            // ...
+            if(self.friend == childData.email){
+              console.log("Friend email: " + self.friend);
+              console.log("childData: " + childData.email);
+              // friend's email matches, add the required data
+              firebase.database().ref('/users/' + childKey + '/friends/')
+              .set({
+                'friend': email
+              });
+            }
+          });
+        });
+      }
+      self.friend = '';
 
 
     },
