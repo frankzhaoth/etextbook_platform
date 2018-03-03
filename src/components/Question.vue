@@ -18,7 +18,7 @@
          
           <v-flex xs10 sm11 md11 lg11>
             <v-card-title primary-title>
-              <h5 class="headline">{{ question.question }}</h5>
+              <h5 class="title">{{ question.question }}</h5>
             </v-card-title>
             <v-divider></v-divider>
             <v-card-text>
@@ -57,18 +57,18 @@
         </v-flex>
       </v-subheader>
 
-      <v-card v-for="(answer, index) in questionAnswers" :key="answer.answerId" class="mb-3">
+      <v-card v-for="(answer, index) in questionAnswers" :key="answer.answerId" class="mb-3 py-3">
         <v-layout fill-height wrap>
           <v-flex xs2 sm1 md1 lg1>
             <v-layout align-center fill-height>
               <v-flex column>
                 <v-flex class="text-xs-center">
-                  <v-icon class="text-xs-center" v-if="currentUserId != question.questionUserId 
+                  <v-icon class="text-xs-center mb-4" v-if="currentUserId != question.questionUserId 
                 && question.questionAcceptedAnswer === answer.answerId"
-                large color="blue darken-1">fas fa-check</v-icon>
+                large color="green darken-1">fas fa-check</v-icon>
                 </v-flex>
                 <v-flex class="text-xs-center">
-                  <v-btn flat :color="answer.isUpvoted" icon slot="activator" 
+                  <v-btn class="ma-0" flat :color="answer.isUpvoted" icon slot="activator" 
                   @click="upvoteAnswer(answer.answerId, index)">
                     <v-icon>thumb_up</v-icon>
                   </v-btn>
@@ -100,10 +100,10 @@
           </v-flex>
 
           <v-flex xs10 sm11 md11 lg11>
-            <v-card-title>
+            <v-card-title class="py-2 px-3">
               <h3>{{answer.userName}}</h3>
               <v-spacer></v-spacer>
-              <h6 class="caption ml-0">{{ getRelativeTime(answer.answerDate) }}</h6>
+              <h6 class="caption grey--text text--darken-1">{{ getRelativeTime(answer.answerDate) }}</h6>
             </v-card-title>
             <v-divider></v-divider>
             <v-card-text>
@@ -157,8 +157,8 @@ export default {
       isAnswered: false,
       question: '',
       questionAnswers: [],
-      voted: 'pink darken-3',
-      notVoted: 'grey',
+      voted: 'red darken-3',
+      notVoted: 'grey lighten-1',
       sortItems: ['Upvotes', 'Most Recent'],
       sort: null,
       customToolbar: [  
