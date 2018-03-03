@@ -7,11 +7,11 @@
           <v-flex xs2 sm1 md1 lg1>
             <v-layout align-center column>
               <v-btn flat :color="question.isUpvoted" icon slot="activator" @click="upvoteQuestion">
-                <v-icon large>fa-caret-up</v-icon>
+                <v-icon>thumb_up</v-icon>
               </v-btn>
               <h6 class="subheading">{{ question.voteScore }}</h6>
               <v-btn flat :color="question.isDownvoted" icon slot="activator" @click="downvoteQuestion">
-                <v-icon large>fa-caret-down</v-icon>
+                <v-icon>thumb_down</v-icon>
               </v-btn>
             </v-layout>
           </v-flex>
@@ -58,53 +58,61 @@
       </v-subheader>
 
       <v-card v-for="(answer, index) in questionAnswers" :key="answer.answerId" class="mb-3">
-        <v-layout>
+        <v-layout fill-height wrap>
           <v-flex xs2 sm1 md1 lg1>
-            <v-layout align-center column>
-              <v-btn flat :color="answer.isUpvoted" icon slot="activator" 
-              @click="upvoteAnswer(answer.answerId, index)">
-                <v-icon large>fa-caret-up</v-icon>
-              </v-btn>
-              <h6 class="subheading">{{ answer.voteScore }}</h6>
-              <v-btn flat :color="answer.isDownvoted" icon slot="activator" 
-              @click="downvoteAnswer(answer.answerId, index)">
-                <v-icon large>fa-caret-down</v-icon>
-              </v-btn>
-
-              <v-btn 
-                v-if="currentUserId === question.questionUserId && question.questionAcceptedAnswer == null" 
-                flat color="grey" icon slot="activator" 
-                @click="acceptAnswer(answer.answerId)">
-                <v-icon large>fas fa-check</v-icon>
-              </v-btn>
-
-              <v-btn 
-                v-if="currentUserId === question.questionUserId 
-                      && question.questionAcceptedAnswer === answer.answerId" 
-                flat color="pink darken-3" icon slot="activator" 
-                @click="unacceptAnswer(answer.answerId)">
-                <v-icon large>fas fa-check</v-icon>
-              </v-btn>
- 
-              <v-icon v-if="currentUserId != question.questionUserId 
-              && question.questionAcceptedAnswer === answer.answerId"
-              large color="pink darken-3">fas fa-check</v-icon>
+            <v-layout align-center fill-height>
+              <v-flex column>
+                <v-flex class="text-xs-center">
+                  <v-icon class="text-xs-center" v-if="currentUserId != question.questionUserId 
+                && question.questionAcceptedAnswer === answer.answerId"
+                large color="blue darken-1">fas fa-check</v-icon>
+                </v-flex>
+                <v-flex class="text-xs-center">
+                  <v-btn flat :color="answer.isUpvoted" icon slot="activator" 
+                  @click="upvoteAnswer(answer.answerId, index)">
+                    <v-icon>thumb_up</v-icon>
+                  </v-btn>
+                </v-flex>
+                <v-flex class="text-xs-center">
+                  <h6 class="subheading">{{ answer.voteScore }}</h6>
+                  <v-btn class="ma-0" flat :color="answer.isDownvoted" icon slot="activator" 
+                  @click="downvoteAnswer(answer.answerId, index)">
+                    <v-icon>thumb_down</v-icon>
+                  </v-btn>
+                </v-flex>
+                <v-flex class="text-xs-center">
+                  <v-btn 
+                    v-if="currentUserId === question.questionUserId && question.questionAcceptedAnswer == null" 
+                    flat color="grey" icon slot="activator" 
+                    @click="acceptAnswer(answer.answerId)">
+                    <v-icon large>fas fa-check</v-icon>
+                  </v-btn>
+                </v-flex>
+                <v-btn 
+                  v-if="currentUserId === question.questionUserId 
+                        && question.questionAcceptedAnswer === answer.answerId" 
+                  flat color="pink darken-3" icon slot="activator" 
+                  @click="unacceptAnswer(answer.answerId)">
+                  <v-icon large>fas fa-check</v-icon>
+                </v-btn>
+              </v-flex>
             </v-layout>
           </v-flex>
 
           <v-flex xs10 sm11 md11 lg11>
+            <v-card-title>
+              <h3>{{answer.userName}}</h3>
+              <v-spacer></v-spacer>
+              <h6 class="caption ml-0">{{ getRelativeTime(answer.answerDate) }}</h6>
+            </v-card-title>
+            <v-divider></v-divider>
             <v-card-text>
               <h6 v-html="answer.answer" class="subheading ml-0"></h6>
             </v-card-text>
           </v-flex>
-        </v-layout>
 
-        <v-layout>
-          <v-flex>
+          <v-flex xs10 sm10 offset-xs2 offset-sm1>
             <v-card-actions>
-              <v-spacer></v-spacer>
-              <h6 class="caption ml-0">By: {{ answer.userName }}</h6>
-              <h6 class="caption ml-0">{{ answer.answerDate }}</h6>
             </v-card-actions>
           </v-flex>
         </v-layout>
@@ -341,6 +349,10 @@ export default {
       ref.update({
         'accepted': null 
       });
+    },
+
+    getRelativeTime: function(time) {
+      return moment(time, "dddd, MMMM Do YYYY, h:mm:ss a").fromNow();
     },
   },
 
