@@ -34,11 +34,13 @@
         </span>
         <v-divider></v-divider>
         <v-select
-          :items="['All', 'Me', 'Anmol Singh']"
+          :items="dropDown"
+          v-model="shareType"
           label="Filter by author"
           single-line
           dense
           bottom
+          v-on:change="showNotes"
         ></v-select>
 
         <v-flex xs12>
@@ -99,7 +101,9 @@ export default {
       colours: ['FFF9A2', '6FC0F7', 'EAB9EA', 'A5E7F9', 'D9F9A5'],
       selectedColour: 'FFF9A2',
       friend: '',
-      addFriend: false
+      addFriend: false,
+      shareType: null,
+      dropDown: []           // loaded at created
     }
   },
   methods: {
@@ -158,49 +162,86 @@ export default {
     shareNote: function(note) {
       let self = this;
       let currentUser = firebase.auth().currentUser.uid;
-      let name, email;
+      let name, email, id;
+      let frdEmail, frdName, frdId;
       let isFriend = false;
+      let userRef = firebase.database().ref('/user/');
+      frdEmail = self.friend;
+      self.friend = '';
+
+      // get current user's name & email, and ID
       firebase.database().ref('/users/' + currentUser).once('value')
       .then(function(snapshot) {
         let val = snapshot.val();
         name =  val.name;
         email = val.email;
-        if (val.friends.friend == self.friend)
+        id = snapshot.key;
+        // to be changed, with changed data structure
+        if (val.friends.friend == frdEmail)
           isFriend = true;
       });
-      if (!isFriend)
-      {
-        firebase.database().ref('/users/' + currentUser + '/friends/')
-        .set({
-          'friend' : self.friend
-        });
 
-        
-        firebase.database().ref('/users/').once('value', function(snapshot) {
+      // get friend's name (email already gotten)
+      firebase.database().ref('/users/')
+      .once('value', function(snap) {
+      
+        snap.forEach(function(snapshot) {
+          let val = snapshot.val();
 
-          snapshot.forEach(function(childSnapshot) {
-            var childKey = childSnapshot.key;
-            var childData = childSnapshot.val();
-
-        console.log("--- " + childData + " ---");
-        console.log("--- " + childSnapshot.val() + " ---");
-        // this returns empty object, although it shouldn't [Object object]
-            // ...
-            if(self.friend == childData.email){
-              console.log("Friend email: " + self.friend);
-              console.log("childData: " + childData.email);
-              // friend's email matches, add the required data
-              firebase.database().ref('/users/' + childKey + '/friends/')
-              .set({
-                'friend': email
-              });
-            }
+          // to be changed, with changed data structure
+          if (val.email == frdEmail){
+            frdName = val.name;
+            frdId = snapshot.key;
+            console.log(val);
+          }
+        })
+      })
+      .then( function() {
+        if (!isFriend)
+        {
+          firebase.database().ref('/users/' + currentUser + '/friends/')
+          .push({
+            'email' : frdEmail,
+            'name' : frdName,
+            'id' : frdId
           });
-        });
+          
+          firebase.database().ref('/users/').once('value', function(snapshot) {
+            snapshot.forEach(function(childSnapshot) {
+              var childKey = childSnapshot.key;
+              var childData = childSnapshot.val();
+              console.log("Email: " + childData.email);
+
+              if(frdEmail == childData.email){
+                console.log("Friend email: " + frdEmail);
+                console.log("childData: " + childData.email);
+                // friend's email matches, add the required data
+                firebase.database().ref('/users/' + childKey + '/friends/')
+                .push({
+                  'email': email,
+                  'name' : name,
+                  'id' : id
+                });
+              }
+            });
+          });
+        }
+      });
+    },
+
+    // This function needs update. This is triggerred due to v-select's property "v-on:change".
+    // Next issue is displaying notes. Currently, notes shown in template. Can be changed and shown
+    // using v-html later, may be. That's my current thought.
+    showNotes: function(value){
+      let currentUser = firebase.auth().currentUser.uid;
+      let myRef = firebase.database().ref('/users/' + currentUser + '/notes/' + this.$route.params.textbookId + '/' + this.page);
+      if(value=="Me"){
+
+      } else if (value== "All"){
+
+      } else {        // Value = Friend name
+
       }
-      self.friend = '';
-
-
     },
   },
   watch: {
@@ -217,6 +258,22 @@ export default {
       function (errorObject) {
         console.log(error);
       });
+
+
+    // load the dropDown from currentUser's friend list (+ 'me')
+    firebase.database().ref('/users/' + currentUser + '/friends/')
+    .once('value', function(snap) {
+      self.dropDown.push('Me');
+      
+      if(snap.exists()) {          // there is atleast 1 friend
+        self.dropDown.push('All');
+        snap.forEach(function(childSnap) {
+          let val = childSnap.val();
+          self.dropDown.push(val.name);
+        });
+      }
+      
+    });
     },
   },
   created: function() {
@@ -251,6 +308,21 @@ export default {
     })
     .catch(function(error) {
       console.log(error);
+    });
+
+    // load the dropDown from currentUser's friend list (+ 'me')
+    firebase.database().ref('/users/' + currentUser + '/friends/')
+    .once('value', function(snap) {
+      self.dropDown.push('Me');
+      
+      if(snap.exists()) {          // there is atleast 1 friend
+        self.dropDown.push('All');
+        snap.forEach(function(childSnap) {
+          let val = childSnap.val();
+          self.dropDown.push(val.name);
+        });
+      }
+      
     });
   }
 }
