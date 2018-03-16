@@ -31,8 +31,8 @@
           <v-flex>
             <v-card-actions>
               <v-spacer></v-spacer>
-              <h6 class="caption ml-0">By: {{ question.questionUserName }}</h6>
-              <h6 class="caption ml-0">{{ question.questionDate }}</h6>
+              <h6 class="caption ml-0">{{ question.questionUserName }},</h6>
+              <h6 class="caption ml-0">{{ getRelativeTime(question.questionDate) }}</h6>
             </v-card-actions>
           </v-flex>
         </v-layout>
@@ -50,7 +50,7 @@
           <v-select
             color="pink darken-3"
             :items="sortItems"
-            v-model="sort"
+            v-model="sortAnswerCriteria"
             label="Sort By"
             class="input-group--focused"
           ></v-select>
@@ -88,13 +88,15 @@
                     <v-icon large>fas fa-check</v-icon>
                   </v-btn>
                 </v-flex>
-                <v-btn 
-                  v-if="currentUserId === question.questionUserId 
-                        && question.questionAcceptedAnswer === answer.answerId" 
-                  flat color="pink darken-3" icon slot="activator" 
-                  @click="unacceptAnswer(answer.answerId)">
-                  <v-icon large>fas fa-check</v-icon>
-                </v-btn>
+                <v-flex class="text-xs-center">
+                  <v-btn 
+                    v-if="currentUserId === question.questionUserId 
+                          && question.questionAcceptedAnswer === answer.answerId" 
+                    flat color="green darken-1" icon slot="activator" 
+                    @click="unacceptAnswer(answer.answerId)">
+                    <v-icon large>fas fa-check</v-icon>
+                  </v-btn>
+                </v-flex>
               </v-flex>
             </v-layout>
           </v-flex>
@@ -132,6 +134,10 @@
         </v-card-actions>
       </v-card>
     </v-container>
+
+    <v-alert type="error" icon="error" transition="scale-transition" dismissible v-model="alert">
+      The answer has to be atleast 10 characters. Try harder!
+    </v-alert>
 		
 	</div>
 </template>
@@ -160,7 +166,8 @@ export default {
       voted: 'red darken-3',
       notVoted: 'grey lighten-1',
       sortItems: ['Upvotes', 'Most Recent'],
-      sort: null,
+      sortAnswerCriteria: 'Upvotes',
+      alert: false,
       customToolbar: [  
         [{ 'header': [false, 1, 2, 3, 4, 5, 6, ] }],
         ['bold', 'italic', 'underline', 'strike'],        
@@ -177,6 +184,11 @@ export default {
   
   methods: {
     submitAnswer: function() {
+
+      // If the input is not valid, return 
+      if (!this.validateForm()) {
+        return;
+      }
     
       let textbookId = this.$route.params.textbookId;
       let questionId = this.$route.params.questionId;
@@ -354,13 +366,10 @@ export default {
     getRelativeTime: function(time) {
       return moment(time, "dddd, MMMM Do YYYY, h:mm:ss a").fromNow();
     },
-  },
 
-  watch: {
-    // whenever question changes, this function will run
-    sort: function (newSelection, oldSelection) {
-      
-      if (this.sort === 'Upvotes') {
+    sortAnswers: function() {
+
+      if (this.sortAnswerCriteria === 'Upvotes') {
         this.questionAnswers.sort(function(answerA, answerB) {
           let upvotesA = answerA.voteScore;
           let upvotesB = answerB.voteScore;
@@ -380,7 +389,7 @@ export default {
         });
       }
 
-      else if (this.sort === "Most Recent") {
+      else if (this.sortAnswerCriteria === "Most Recent") {
         this.questionAnswers.sort(function(answerA, answerB) {
           let dateA = answerA.date;
           let dateB = answerB.date;
@@ -403,6 +412,29 @@ export default {
       else {
         // Do nothing
       }
+    },
+
+    validateForm: function() {
+      
+      // Remove html tags from answer
+      let answer = this.currentUserAnswer.replace(/<\/?[^>]+(>|$)/g, "");
+      // Remove all spaces
+      answer = answer.replace(/\s/g,'');
+      
+      if (answer == "" || answer.length < 10) {
+        this.alert = true;
+        return false;
+      }
+
+      this.alert = false;
+      return true;
+    }
+  },
+
+  watch: {
+    // Whenever sortAnswerCriteria changes, this will get called
+    sortAnswerCriteria: function (newSelection, oldSelection) {
+      this.sortAnswers();
     }
   },
 
@@ -461,6 +493,8 @@ export default {
               self.isAnswered = true;
             }
           });
+
+          self.sortAnswers();
         }
       }
     });
