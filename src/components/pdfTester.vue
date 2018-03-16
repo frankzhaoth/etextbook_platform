@@ -22,7 +22,13 @@
         </v-flex>
       </v-flex>
       <v-flex xs2 sm2 id="notes">
-        <p class="subheading">Notes - Page {{page}}</p>
+
+        <v-flex xs12 class="text-xs-center">
+            <v-chip :selected="sidebarMode === 'notes'" :outline="sidebarMode !== 'notes'" :class="{ lowOpacity: sidebarMode !== 'notes' }" color="blue darken-2" class="white--text" @click="toggleSidebarMode()">Notes</v-chip>
+            <v-chip :selected="sidebarMode === 'questions'" :outline="sidebarMode !== 'questions'" :class="{ lowOpacity: sidebarMode !== 'questions' }" color="blue darken-2" class="white--text" @click="toggleSidebarMode()">Questions</v-chip>
+        </v-flex>
+
+        <p class="subheading">Notes <span v-if="noteViewMode === 'page'" class="grey--text text--darken-1" @click="toggleNotesMode()">View All</span><span v-if="noteViewMode === 'all'" class="grey--text text--darken-1" @click="toggleNotesMode()">View page</span></p>
         <span>
           <v-tooltip bottom>
             <v-icon slot="activator" @click="">fa-share</v-icon>
@@ -30,16 +36,16 @@
           </v-tooltip>
         </span>
         <v-divider></v-divider>
-        <v-select
+        <!--<v-select
           :items="['All', 'Me', 'Anmol Singh']"
           label="Filter by author"
           single-line
           dense
           bottom
-        ></v-select>
+        ></v-select>-->
 
         <v-flex xs12>
-          <v-card class="new" v-bind:style="{ backgroundColor: '#' + selectedColour}">
+          <v-card class="new mb-4" v-bind:style="{ backgroundColor: '#' + selectedColour}">
             <v-card-title>
               <textarea @keyup.enter="addNote" v-model="newNote" placeholder="New note..."></textarea>
               <span v-if="newNote" v-on:click="addNote" style="position: absolute; bottom: 10px; right: 16px; color: #313DB2; cursor: pointer;">Add</span>
@@ -51,8 +57,28 @@
             </v-card-actions>
           </v-card>
 
-          <!-- Notes start here -->
-          <v-card v-for="(note, key) in notes"  v-bind:style="{ backgroundColor: '#' + note.colour}">
+          <!-- All notes start here -->
+          <div v-if="noteViewMode === 'all'" class="allnotes" v-for="(note, key) in notes">
+            <v-subheader class="pl-0" :key="key">Page {{key}}</v-subheader>
+            <v-divider></v-divider>
+            <v-card v-for="(noteInfo, noteKey) in note" v-bind:style="{ backgroundColor: '#' + noteInfo.colour}">
+              <v-icon v-on:click="deleteNote(noteKey)">fa-trash</v-icon>
+              <v-icon @click="toggleShare"  class="shareF" small right color="blue darken-4">chat</v-icon>
+
+              <v-flex xs8 v-if="addFriend">
+                <v-text-field @keyup.enter="shareNote(note)" v-model="friend" label="Friend's email"  clearable></v-text-field>
+              </v-flex>
+              <v-card-title>
+                <p>{{noteInfo.text}}</p>
+              </v-card-title>
+              <span class="author">Add author name here</span>
+            </v-card>
+          </div>
+          
+          <!--Page notes start here-->
+          <v-subheader v-if="noteViewMode === 'page'" class="pl-0">Page {{page}}</v-subheader>
+          <v-divider v-if="noteViewMode === 'page'"></v-divider>
+          <v-card v-if="noteViewMode === 'page'" v-for="(note, key) in notes"  v-bind:style="{ backgroundColor: '#' + note.colour}">
             <v-icon v-on:click="deleteNote(key)">fa-trash</v-icon>
             <v-icon @click="toggleShare"  class="shareF" small right color="blue darken-4">chat</v-icon>
 
@@ -62,14 +88,15 @@
             <v-card-title>
               <p v-html="getAnchormeText(note.text)"></p>
             </v-card-title>
-            <span class="author">Created by: Anmol Singh</span>
+            <span class="author">Add author name here</span>
           </v-card>
-
+  
         </v-flex>
       </v-flex>
       <v-flex xs10 sm10>
         <clip-loader :loading="!src" :color="'#7c7c7c'" :size="size"></clip-loader>
         <pdf ref="pdf" :src="src" :page="page" :rotate="rotate" @password="password" @progress="loadedRatio = $event" @error="error" @num-pages="numPages = $event"></pdf>
+        <div id="text-layer" class="textLayer" @mouseup="textSelection()"></div>
       </v-flex>
     </v-layout>
   </v-container>
@@ -94,8 +121,10 @@ export default {
       numPages: 0,
       rotate: 0,
       textbook: {},
+      sidebarMode: 'notes',
       newNote: '',
       notes: {},
+      noteViewMode: 'page',
       colours: ['FFF9A2', '6FC0F7', 'EAB9EA', 'A5E7F9', 'D9F9A5'],
       selectedColour: 'FFF9A2',
       friend: '',
@@ -103,6 +132,9 @@ export default {
     }
   },
   methods: {
+    textSelection: function() {
+      console.log(window.getSelection().toString(), this);
+    },
     getAnchormeText: function(text) {
       return anchorme(text);
     },
@@ -116,12 +148,26 @@ export default {
     },
     logContent: function() {
       let self = this;
-      console.log(this.$refs.pdf.pdf.getCurrentPage());
 
+      console.log(this.$refs.pdf.pdf.createTextLayer(this.rotate, this.$refs.pdf.$refs.canvas));
+
+      // Log page text
+      /*
       this.$refs.pdf.pdf.getCurrentPage().getTextContent().then(function(content) {
-          var text = content.items.map(item => item.str);
-          console.log(text);
-        })
+        var text = content.items.map(item => item.str);
+        console.log(text);
+        var textLayer = new TextLayerBuilder({
+          textLayerDiv : $textLayerDiv.get(0),
+          pageIndex : page_num - 1,
+          viewport : viewport
+        });
+
+        textLayer.setTextContent(textContent);
+        textLayer.render();
+      });
+      */
+
+
       //this.$refs.pdf.pdf.forEachPage(function(page) {
       //  console.log(page);
       //});
@@ -187,21 +233,59 @@ export default {
 
 
     },
+    toggleSidebarMode: function() {
+      if (this.sidebarMode === 'notes')
+        this.sidebarMode = 'questions';
+      else
+        this.sidebarMode = 'notes';
+    },
+    toggleNotesMode: function() {
+      let currentUser = firebase.auth().currentUser.uid;
+      let self = this;
+      
+      if (this.noteViewMode === 'page') {
+        this.noteViewMode = 'all';
+        // Get ALL notes from firebase for current user
+        let ref = firebase.database().ref('/users/' + currentUser + '/notes/' + this.$route.params.textbookId);
+        ref.on("value", function(snapshot) {
+          self.notes = snapshot.val();
+          //let keys = Object.keys(snapshot.val());
+          //console.log(snapshot.val()[keys[0]]);
+        }, 
+        function (errorObject) {
+          console.log(error);
+        });
+      }
+
+      else {
+        this.noteViewMode = 'page';
+        // Get notes for current page from firebase
+        let ref = firebase.database().ref('/users/' + currentUser + '/notes/' + this.$route.params.textbookId + '/' + this.page);
+        ref.on("value", function(snapshot) {
+          self.notes = snapshot.val();
+        }, 
+        function (errorObject) {
+          console.log(error);
+        });
+      }
+    },
   },
   watch: {
     // whenever question changes, this function will run
     page: function (newPage, oldPage) {
-      // Get notes from firebase
-      let currentUser = firebase.auth().currentUser.uid;
-      let self = this;
+      if (this.noteViewMode === 'page') {
+        // Get notes from firebase
+        let currentUser = firebase.auth().currentUser.uid;
+        let self = this;
 
-      let ref = firebase.database().ref('/users/' + currentUser + '/notes/' + this.$route.params.textbookId + '/' + this.page);
-      ref.on("value", function(snapshot) {
-        self.notes = snapshot.val();
-      }, 
-      function (errorObject) {
-        console.log(error);
-      });
+        let ref = firebase.database().ref('/users/' + currentUser + '/notes/' + this.$route.params.textbookId + '/' + this.page);
+        ref.on("value", function(snapshot) {
+          self.notes = snapshot.val();
+        }, 
+        function (errorObject) {
+          console.log(error);
+        });
+      }
     },
   },
   created: function() {
@@ -300,16 +384,52 @@ export default {
     cursor: pointer;
   }
 
+  #pdfViewer .lowOpacity {
+    opacity: .6;
+  }
+
+  #pdfViewer .chip, #pdfViewer .chip .chip__content {
+    cursor: pointer;
+  }
+
+  #pdfViewer .textLayer {
+    overflow: hidden;
+    opacity: 0.2;
+    line-height: 1.0;
+  }
+
+  #pdfViewer .textLayer ::selection {
+    background: #FFF9A2;
+  }
+
+  #pdfViewer .textLayer >>> div {
+    color: transparent;
+    position: absolute;
+    white-space: pre;
+    cursor: text;
+    -webkit-transform-origin: 0% 0%;
+    -moz-transform-origin: 0% 0%;
+    -o-transform-origin: 0% 0%;
+    -ms-transform-origin: 0% 0%;
+    transform-origin: 0% 0%;
+  }
+
   #pdfViewer #notes {
     background: #EFEFEF;
     padding: 5px 10px;
     border-right: 1px solid #ABB7B7;
+    overflow-y: scroll;
   }
 
   #pdfViewer #notes > p.subheading {
     margin-bottom: 5px;
     width: calc(100% - 20px);
     display: inline-block;
+  }
+
+  #pdfViewer #notes > p.subheading span {
+    font-size: .8rem;
+    cursor: pointer;
   }
 
   #pdfViewer #notes > .menu button {
@@ -336,6 +456,10 @@ export default {
     display: inline-block;
     cursor: pointer;
     vertical-align: top;
+  }
+
+  #pdfViewer #notes .allnotes .subheading {
+    padding-left: 0;
   }
 
   #pdfViewer #notes .card {
