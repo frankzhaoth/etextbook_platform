@@ -30,7 +30,88 @@
 
         <v-flex xs12 id="questions" v-if="sidebarMode === 'questions'">
 
-          <p>ADD QUESTIONS HTML HERE</p>
+          <p class="subheading">Questions
+            <v-btn color="primary" small @click="newQuestion()" flat>New Question</v-btn>
+          </p>
+          <v-divider></v-divider>
+
+          <v-list two-line v-if="questionsArray.length != 0">
+            <template v-for="(question, index) in questionsArray">
+              <v-list-tile
+                avatar
+                ripple
+                @click="clickQuestion(index)"
+                :key="question.qId"
+              >
+                <v-list-tile-content>
+                  <v-list-tile-title>{{ question.question }}</v-list-tile-title>
+                  <v-list-tile-sub-title>{{ question.userName }}</v-list-tile-sub-title>
+                </v-list-tile-content>
+              </v-list-tile>
+              <v-divider v-if="index + 1 < questionsArray.length" :key="index"></v-divider>
+            </template>
+          </v-list>
+
+          <v-dialog v-model="questionDialog" max-width="500px">
+            <new-question :page-prop="page" @clicked="onClickChild"></new-question>
+          </v-dialog>
+
+          <v-dialog v-model="selectedQuestionDialog" max-width="600px">
+            
+            <v-container fluid>
+              <v-card>
+                <v-layout>
+                  <v-flex>
+                    <v-card-title primary-title>
+                      <h5 class="title">{{ selectedQuestion.question }}</h5>
+                    </v-card-title>
+                    <v-divider></v-divider>
+                    <v-card-text>
+                      <h6 v-html="selectedQuestion.body" class="subheading"></h6>
+                    </v-card-text>
+                  </v-flex>
+                </v-layout>
+                <v-layout>
+                  <v-flex>
+                    <v-card-actions>
+                      <v-spacer></v-spacer>
+                      <h6 class="caption ml-0">{{ selectedQuestion.userName }},</h6>
+                      <h6 class="caption ml-0">{{ getRelativeTime(selectedQuestion.date) }}</h6>
+                    </v-card-actions>
+                  </v-flex>
+                </v-layout>
+                <v-subheader>
+                  <v-flex>
+                    <h6 class="title">Best Answer</h6>
+                  </v-flex>
+                </v-subheader>
+                <v-layout>
+                  <v-flex>
+                    <v-card-title class="py-2 px-3">
+                      <h3>{{bestAnswer.userName}}</h3>
+                      <v-spacer></v-spacer>
+                      <h6 class="caption grey--text text--darken-1">{{ getRelativeTime(bestAnswer.date) }}</h6>
+                    </v-card-title>
+                    <v-divider></v-divider>
+                    <v-card-text>
+                      <h6 v-html="bestAnswer.answer" class="subheading ml-0"></h6>
+                    </v-card-text>
+                  </v-flex>
+                </v-layout>
+                <v-layout>
+                  <v-flex>
+                    <v-card-actions>
+                      <h6 class="caption ml-3">Upvotes: {{ bestAnswer.voteScore }}</h6>
+                      <v-icon small color="green darken-1" v-if="bestAnswer.accepted === true">fas fa-check</v-icon>
+                      <v-spacer></v-spacer>
+                      <v-btn flat color="primary" @click="goToForum">Forum</v-btn>
+                    </v-card-actions>
+                  </v-flex>
+                </v-layout>
+              </v-card>
+            </v-container>
+
+          </v-dialog>
 
         </v-flex>
 
@@ -113,12 +194,16 @@ import firebase from 'firebase'
 import pdf from 'vue-pdf'
 import ClipLoader from 'vue-spinner/src/ClipLoader.vue'
 import anchorme from "anchorme"
+import NewQuestion from "./NewQuestion.vue"
+
+var moment = require('moment');
 
 export default {
   name: 'pdfTester',
   components: {
     pdf: pdf,
-    ClipLoader
+    ClipLoader,
+    'new-question': NewQuestion
   },
   data () {
     return {
@@ -135,7 +220,12 @@ export default {
       colours: ['FFF9A2', '6FC0F7', 'EAB9EA', 'A5E7F9', 'D9F9A5'],
       selectedColour: 'FFF9A2',
       friend: '',
-      addFriend: false
+      addFriend: false,
+      questionDialog: false,
+      questionsArray: [],
+      selectedQuestion: '',
+      bestAnswer: '',
+      selectedQuestionDialog: false
     }
   },
   methods: {
@@ -276,6 +366,123 @@ export default {
         });
       }
     },
+
+    newQuestion: function() {
+      this.questionDialog = true;
+    },
+
+    onClickChild: function() {
+      // This is called when the user hits the submit button when asking a new question
+      this.questionDialog = false;
+    },
+
+    getQuestionsOnPage: function() {
+      let self = this;
+      let textbookId = self.$route.params.textbookId;
+
+      // Clear the questionsArray
+      self.questionsArray = [];
+
+      let qRef = firebase.database().ref('/forum/' + textbookId);
+      qRef.orderByChild("page").equalTo(self.page).on("value", function(questions) {
+        if (questions.exists()) {
+        questions.forEach(function(question) {
+          let questionData = question.val();
+          let questionKey = question.key;
+          
+          self.questionsArray.push({
+            'question': questionData.question,
+            'body': questionData.body,
+            'userName': questionData.userName,
+            'userId': questionData.userId,
+            'qId': questionKey,
+            'accepted': questionData.accepted,
+            'date': moment(questionData.date).local().format("dddd, MMMM Do YYYY, h:mm:ss a"),
+            'answers': questionData.answers
+          });
+        });   
+      }
+      });
+    },
+
+    getRelativeTime: function(time) {
+      return moment(time, "dddd, MMMM Do YYYY, h:mm:ss a").fromNow();
+    },
+
+    clickQuestion: function(index) {
+      let question = this.questionsArray[index];
+      let answers = question.answers;
+
+      // Save the selected question 
+      this.selectedQuestion = question;
+
+      // Look for the best answer 
+      if (answers != null) {
+        
+        // The best answer is considered the accepted answer
+        if (answers[question.accepted] != null) {
+
+            // Get the answer and the answer votes
+            let answer = answers[question.accepted];
+            let answerVotes = answer.votes;
+
+            // Calculate the upvotes 
+            let voteScore = 0;
+            if (answerVotes != null) {
+              Object.keys(answerVotes).forEach(function(voteKey) {
+                voteScore += answerVotes[voteKey].vote;
+              });
+            }
+
+            answer['voteScore'] = voteScore;
+            answer['accepted'] = true;
+            answer['date'] = moment(answer.date).local().format("dddd, MMMM Do YYYY, h:mm:ss a");
+
+            this.bestAnswer = answer;
+        }
+
+        // If it doesn't exist, pick the highest voted answer (>0)
+        else {
+          let questionAnswers = [];
+          Object.keys(answers).forEach(function(answerKey) {
+
+            // Get the answer and the answer votes
+            let answer = answers[answerKey];
+            let answerVotes = answer.votes;
+
+            // Calculate the upvotes 
+            let voteScore = 0;
+            if (answerVotes != null) {
+              Object.keys(answerVotes).forEach(function(voteKey) {
+                voteScore += answerVotes[voteKey].vote;
+              });
+            }
+
+            answer['voteScore'] = voteScore;
+            answer['date'] = moment(answer.date).local().format("dddd, MMMM Do YYYY, h:mm:ss a");
+            questionAnswers.push(answer);
+          });
+
+          // Find the most upvoted answer
+          let result = Math.max.apply(Math, questionAnswers.map(function(answer){ return answer.voteScore; }));
+
+          // If the most upvoted answer is more than 0, then show it to the user
+          if (result > 0) {
+            this.bestAnswer = questionAnswers.find(function(answer){ return answer.voteScore === result; });
+          } else {
+            this.bestAnswer = null;
+          }
+        }
+      }
+
+      this.selectedQuestionDialog = true;
+    },
+
+    goToForum: function() {
+      if (this.selectedQuestion.qId != null) {
+        this.$router.push('/textbook/' + this.$route.params.textbookId + '/forum/' + this.selectedQuestion.qId);
+      }
+    }
   },
   watch: {
     // whenever question changes, this function will run
@@ -293,6 +500,8 @@ export default {
           console.log(error);
         });
       }
+
+      this.getQuestionsOnPage();
     },
   },
   created: function() {
@@ -328,6 +537,9 @@ export default {
     .catch(function(error) {
       console.log(error);
     });
+
+    // Get the questions from the database for the current page
+    self.getQuestionsOnPage();
   }
 }
 </script>

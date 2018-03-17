@@ -38,6 +38,8 @@ export default {
     VueEditor
   },
 
+  props: ['page-prop'],
+
   data () {
     return {
       question: '',
@@ -68,6 +70,7 @@ export default {
   	  let self = this;
   	  let textbookId = self.$route.params.textbookId;
   	  let userId = firebase.auth().currentUser.uid;
+      let routeName = self.$route.name;
 
   	  if (userId != null) {
         
@@ -81,11 +84,18 @@ export default {
           'body': self.body,
           'userName': userName,
           'userId': userId,
-          'date': firebase.database.ServerValue.TIMESTAMP
+          'date': firebase.database.ServerValue.TIMESTAMP,
+          'page': self.pageProp
           });
 
-          // Redirect to the question page
-          self.$router.replace('/textbook/' + self.$route.params.textbookId + '/forum/' + ref.key);
+          // This component is being reused in the textbook view url and the new question url
+          if (routeName === "pdfTester") {
+            // When we are in the textbook view url, we notify the parent that the question was submitted
+            self.notifyParent();
+          } else {
+            // We are in the new question url, so redirect to the question page
+            self.$router.replace('/textbook/' + self.$route.params.textbookId + '/forum/' + ref.key);
+          }
         });
   	  } else {
   	  	console.log("currentUser returned null");
@@ -115,6 +125,10 @@ export default {
         this.alert = false;
         return true;
       }
+    },
+
+    notifyParent() {
+      this.$emit('clicked');
     }
   }
 }
