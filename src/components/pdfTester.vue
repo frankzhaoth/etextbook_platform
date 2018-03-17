@@ -80,12 +80,26 @@
                     </v-card-actions>
                   </v-flex>
                 </v-layout>
-                <v-subheader>
-                  <v-flex>
-                    <h6 class="title">Best Answer</h6>
-                  </v-flex>
-                </v-subheader>
-                <v-layout>
+                
+                <v-layout v-if="bestAnswer == null">
+                  <v-subheader>
+                    <v-flex>
+                      <h6 class="subheading">There are no good answers, go to the forum to see all the answers or
+                        better yet, answer it yourself.
+                      </h6>
+                    </v-flex>
+                  </v-subheader>
+                </v-layout>
+
+                 <v-layout v-if="bestAnswer != null">
+                  <v-subheader>
+                    <v-flex>
+                      <h6 class="title">Best Answer</h6>
+                    </v-flex>
+                  </v-subheader>
+                </v-layout>
+
+                <v-layout v-if="bestAnswer != null">
                   <v-flex>
                     <v-card-title class="py-2 px-3">
                       <h3>{{bestAnswer.userName}}</h3>
@@ -101,13 +115,15 @@
                 <v-layout>
                   <v-flex>
                     <v-card-actions>
-                      <h6 class="caption ml-3">Upvotes: {{ bestAnswer.voteScore }}</h6>
-                      <v-icon small color="green darken-1" v-if="bestAnswer.accepted === true">fas fa-check</v-icon>
+                      <h6 class="caption ml-3" v-if="bestAnswer != null">Upvotes: {{ bestAnswer.voteScore }}</h6>
+                      <v-icon small color="green darken-1" v-if="bestAnswer != null && bestAnswer.accepted === true"
+                      >fas fa-check</v-icon>
                       <v-spacer></v-spacer>
                       <v-btn flat color="primary" @click="goToForum">Forum</v-btn>
                     </v-card-actions>
                   </v-flex>
                 </v-layout>
+
               </v-card>
             </v-container>
 
@@ -384,24 +400,29 @@ export default {
       self.questionsArray = [];
 
       let qRef = firebase.database().ref('/forum/' + textbookId);
+
       qRef.orderByChild("page").equalTo(self.page).on("value", function(questions) {
         if (questions.exists()) {
-        questions.forEach(function(question) {
-          let questionData = question.val();
-          let questionKey = question.key;
-          
-          self.questionsArray.push({
-            'question': questionData.question,
-            'body': questionData.body,
-            'userName': questionData.userName,
-            'userId': questionData.userId,
-            'qId': questionKey,
-            'accepted': questionData.accepted,
-            'date': moment(questionData.date).local().format("dddd, MMMM Do YYYY, h:mm:ss a"),
-            'answers': questionData.answers
-          });
-        });   
-      }
+
+          // Clear the questionsArray
+          self.questionsArray = [];
+
+          questions.forEach(function(question) {
+            let questionData = question.val();
+            let questionKey = question.key;
+            
+            self.questionsArray.push({
+              'question': questionData.question,
+              'body': questionData.body,
+              'userName': questionData.userName,
+              'userId': questionData.userId,
+              'qId': questionKey,
+              'accepted': questionData.accepted,
+              'date': moment(questionData.date).local().format("dddd, MMMM Do YYYY, h:mm:ss a"),
+              'answers': questionData.answers
+            });
+          });   
+        }
       });
     },
 
@@ -473,6 +494,8 @@ export default {
             this.bestAnswer = null;
           }
         }
+      } else {
+        this.bestAnswer = null;
       }
 
       this.selectedQuestionDialog = true;
@@ -540,6 +563,13 @@ export default {
 
     // Get the questions from the database for the current page
     self.getQuestionsOnPage();
+  },
+
+  beforeDestroy: function() {
+    let textbookId = this.$route.params.textbookId;
+
+    let qRef = firebase.database().ref('/forum/' + textbookId);
+    qRef.off();
   }
 }
 </script>

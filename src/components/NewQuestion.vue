@@ -78,6 +78,14 @@ export default {
         firebase.database().ref('/users/' + userId).once('value').then(function(user) {
           let userName = user.val().name;
 
+          // If the question has an associate page, get it from the props
+          let page = self.pageProp;
+
+          // If there is no page associated with it, set it to null
+          if (page == null) {
+            page = null;
+          }
+
           // Store the question on the database
           let ref = firebase.database().ref('forum/' + textbookId).push({
           'question': self.question,
@@ -85,7 +93,7 @@ export default {
           'userName': userName,
           'userId': userId,
           'date': firebase.database.ServerValue.TIMESTAMP,
-          'page': self.pageProp
+          'page': page
           });
 
           // This component is being reused in the textbook view url and the new question url
