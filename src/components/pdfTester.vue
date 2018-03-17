@@ -21,13 +21,20 @@
           </div>
         </v-flex>
       </v-flex>
-      <v-flex xs2 sm2 id="notes">
+      <v-flex xs2 sm2 id="sidebar">
 
         <v-flex xs12 class="text-xs-center">
             <v-chip :selected="sidebarMode === 'notes'" :outline="sidebarMode !== 'notes'" :class="{ lowOpacity: sidebarMode !== 'notes' }" color="blue darken-2" class="white--text" @click="toggleSidebarMode()">Notes</v-chip>
             <v-chip :selected="sidebarMode === 'questions'" :outline="sidebarMode !== 'questions'" :class="{ lowOpacity: sidebarMode !== 'questions' }" color="blue darken-2" class="white--text" @click="toggleSidebarMode()">Questions</v-chip>
         </v-flex>
 
+        <v-flex xs12 id="questions" v-if="sidebarMode === 'questions'">
+
+          <p>ADD QUESTIONS HTML HERE</p>
+
+        </v-flex>
+
+        <v-flex xs12 id="notes" v-if="sidebarMode === 'notes'">
         <p class="subheading">Notes <span v-if="noteViewMode === 'page'" class="grey--text text--darken-1" @click="toggleNotesMode()">View All</span><span v-if="noteViewMode === 'all'" class="grey--text text--darken-1" @click="toggleNotesMode()">View page</span></p>
         <span>
           <v-tooltip bottom>
@@ -90,7 +97,7 @@
             </v-card-title>
             <span class="author">Add author name here</span>
           </v-card>
-  
+          </v-flex>
         </v-flex>
       </v-flex>
       <v-flex xs10 sm10>
@@ -414,11 +421,15 @@ export default {
     transform-origin: 0% 0%;
   }
 
-  #pdfViewer #notes {
+  #pdfViewer #sidebar {
     background: #EFEFEF;
     padding: 5px 10px;
     border-right: 1px solid #ABB7B7;
+  }
+
+  #pdfViewer #notes, #pdfViewer #questions {
     overflow-y: scroll;
+    margin-top: 10px;
   }
 
   #pdfViewer #notes > p.subheading {
