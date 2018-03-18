@@ -31,9 +31,9 @@
         <v-flex xs12 id="questions" v-if="sidebarMode === 'questions'">
 
           <p class="subheading">Questions
-            <v-btn color="primary" small @click="newQuestion()" flat>New Question</v-btn>
+            <v-btn color="primary" small @click="newQuestion" flat>New Question</v-btn>
           </p>
-          <v-divider></v-divider>
+          <v-divider></v-divider> 
 
           <v-list two-line v-if="questionsArray.length != 0">
             <template v-for="(question, index) in questionsArray">
@@ -84,7 +84,7 @@
                 <v-layout v-if="bestAnswer == null">
                   <v-subheader>
                     <v-flex>
-                      <h6 class="subheading">There are no good answers, go to the forum to see all the answers or
+                      <h6 class="subheading mt-4">There are no good answers, go to the forum to see all the answers or
                         better yet, answer it yourself.
                       </h6>
                     </v-flex>

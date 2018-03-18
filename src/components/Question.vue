@@ -185,14 +185,20 @@ export default {
   methods: {
     submitAnswer: function() {
 
+      let textbookId = this.$route.params.textbookId;
+      let questionId = this.$route.params.questionId;
+      
+      let userId = null;
+      if (firebase.auth().currentUser != null) {
+        userId = firebase.auth().currentUser.uid;
+      } else {
+        this.$router.replace('/login');
+      }
+
       // If the input is not valid, return 
       if (!this.validateForm()) {
         return;
       }
-    
-      let textbookId = this.$route.params.textbookId;
-      let questionId = this.$route.params.questionId;
-      let userId = this.currentUserId;
 
       let self = this;
       
@@ -212,7 +218,13 @@ export default {
     upvoteQuestion: function() {
       let textbookId = this.$route.params.textbookId;
       let questionId = this.$route.params.questionId;
-      let userId = this.currentUserId;
+      
+      let userId = null;
+      if (firebase.auth().currentUser != null) {
+        userId = firebase.auth().currentUser.uid;
+      } else {
+        this.$router.replace('/login');
+      }
 
       let ref = firebase.database().ref('/forum/' + textbookId + '/' + questionId + '/votes/' + userId);
 
@@ -229,7 +241,18 @@ export default {
     downvoteQuestion: function() {
       let textbookId = this.$route.params.textbookId;
       let questionId = this.$route.params.questionId;
-      let userId = this.currentUserId;
+      
+      let userId = null;
+      if (firebase.auth().currentUser != null) {
+        userId = firebase.auth().currentUser.uid;
+      } else {
+        this.$router.replace('/login');
+      }
+
+      // Redirect if userId is null
+      if (userId == null) {
+        this.$router.replace('/login');
+      }
 
       let ref = firebase.database().ref('/forum/' + textbookId + '/' + questionId + '/votes/' + userId);
       
@@ -246,7 +269,13 @@ export default {
     upvoteAnswer: function(answerId, index) {
       let textbookId = this.$route.params.textbookId;
       let questionId = this.$route.params.questionId;
-      let userId = this.currentUserId;
+      
+      let userId = null;
+      if (firebase.auth().currentUser != null) {
+        userId = firebase.auth().currentUser.uid;
+      } else {
+        this.$router.replace('/login');
+      }
 
       let ref = firebase.database().ref('/forum/' + textbookId + '/' + questionId + 
         '/answers/' + answerId + '/votes/' + userId);
@@ -264,7 +293,13 @@ export default {
     downvoteAnswer: function(answerId, index) {
       let textbookId = this.$route.params.textbookId;
       let questionId = this.$route.params.questionId;
-      let userId = this.currentUserId;
+      
+      let userId = null;
+      if (firebase.auth().currentUser != null) {
+        userId = firebase.auth().currentUser.uid;
+      } else {
+        this.$router.replace('/login');
+      }
 
       let ref = firebase.database().ref('/forum/' + textbookId + '/' + questionId + 
         '/answers/' + answerId + '/votes/' + userId);
@@ -344,6 +379,13 @@ export default {
     acceptAnswer: function(answerId) {
       let textbookId = this.$route.params.textbookId;
       let questionId = this.$route.params.questionId;
+      
+      let userId = null;
+      if (firebase.auth().currentUser != null) {
+        userId = firebase.auth().currentUser.uid;
+      } else {
+        this.$router.replace('/login');
+      }
 
       let ref = firebase.database().ref('/forum/' + textbookId + '/' + questionId);
 
@@ -355,6 +397,13 @@ export default {
     unacceptAnswer: function(answerId) {
       let textbookId = this.$route.params.textbookId;
       let questionId = this.$route.params.questionId;
+      
+      let userId = null;
+      if (firebase.auth().currentUser != null) {
+        userId = firebase.auth().currentUser.uid;
+      } else {
+        this.$router.replace('/login');
+      }
 
       let ref = firebase.database().ref('/forum/' + textbookId + '/' + questionId);
 
