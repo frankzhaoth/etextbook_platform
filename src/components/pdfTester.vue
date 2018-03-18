@@ -563,6 +563,20 @@ export default {
 
     // Get the questions from the database for the current page
     self.getQuestionsOnPage();
+
+    // Check if the url has a question associated with it
+    let qId = self.$route.query.qId;
+
+    // If it exists, get the question and go to the question page
+    if (qId != null) {
+      let qRef = firebase.database().ref('/forum/' + self.$route.params.textbookId + '/' + qId);
+      qRef.once('value', function(question) {
+        let questionData = question.val();
+        if (questionData != null && questionData.page != null) {
+          self.page = questionData.page;
+        }
+      });
+    }
   },
 
   beforeDestroy: function() {

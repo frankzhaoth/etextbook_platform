@@ -30,6 +30,8 @@
         <v-layout>
           <v-flex>
             <v-card-actions>
+              <v-btn flat small color="pink darken-3" @click="goToTextbook" v-if="question.questionPage != null" 
+              >Textbook</v-btn>
               <v-spacer></v-spacer>
               <h6 class="caption ml-0">{{ question.questionUserName }},</h6>
               <h6 class="caption ml-0">{{ getRelativeTime(question.questionDate) }}</h6>
@@ -477,6 +479,13 @@ export default {
 
       this.alert = false;
       return true;
+    },
+
+    goToTextbook: function() {
+      let textbookId = this.$route.params.textbookId;
+      let questionId = this.$route.params.questionId;
+
+      this.$router.push('/textbook/' + textbookId + '/view?qId=' + questionId);
     }
   },
 
@@ -514,7 +523,8 @@ export default {
           'questionUserName': questionData.userName,
           'questionUserId': questionData.userId,
           'questionAcceptedAnswer': questionData.accepted,
-          'questionDate': moment(questionData.date).local().format("dddd, MMMM Do YYYY, h:mm:ss a")
+          'questionDate': moment(questionData.date).local().format("dddd, MMMM Do YYYY, h:mm:ss a"),
+          'questionPage': questionData.page
         };
         
         // Get the votes of the question
