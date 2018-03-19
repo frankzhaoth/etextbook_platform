@@ -64,7 +64,7 @@
             <v-card-title>
               <p v-html="getAnchormeText(note.text)"></p>
             </v-card-title>
-            <span class="author">Created by: Anmol Singh</span>
+            <span class="author">Created by: {{note.name}}</span>
           </v-card>
 
         </v-flex>
@@ -103,7 +103,8 @@ export default {
       friend: '',
       addFriend: false,
       shareType: null,
-      dropDown: []           // loaded at created
+      dropDown: [],           // loaded at created
+      uid: ''
     }
   },
   methods: {
@@ -142,15 +143,29 @@ export default {
     addNote: function() {
       let currentUser = firebase.auth().currentUser.uid;
       let self = this;
+      let name;
 
-      firebase.database().ref('/users/' + currentUser + '/notes/' + this.$route.params.textbookId + '/' + this.page).push({
-        'text': this.newNote,
-        'colour': self.selectedColour
+      firebase.database().ref('/users/' + currentUser).once('value', function(snap) {
+        let val = snap.val();
+        name = val.name;
+        console.log("name1: " + name);
+      })
+      .then(function() {
+
+        console.log("name: " + name);
+        firebase.database().ref('/users/' + currentUser + '/notes/' + self.$route.params.textbookId + '/' + self.page).push({
+          'text': self.newNote,
+          'colour': self.selectedColour,
+          'name' : name
+        });
+        console.log("name2: " + name);
+
+        self.newNote = '';
       });
-      this.newNote = '';
     },
     deleteNote: function(key) {
       let currentUser = firebase.auth().currentUser.uid;
+      console.log('entering delete fcn');
       firebase.database().ref('/users/' + currentUser + '/notes/' + this.$route.params.textbookId + '/' + this.page + '/' + key).remove();
     },
     toggleShare: function() {
@@ -206,7 +221,8 @@ export default {
             'id' : frdId
           });
           
-          firebase.database().ref('/users/').once('value', function(snapshot) {
+          firebase.database().ref('/users/')
+          .once('value', function(snapshot) {
             snapshot.forEach(function(childSnapshot) {
               var childKey = childSnapshot.key;
               var childData = childSnapshot.val();
@@ -234,12 +250,24 @@ export default {
     // using v-html later, may be. That's my current thought.
     showNotes: function(value){
       let currentUser = firebase.auth().currentUser.uid;
+      let self = this;
       let myRef = firebase.database().ref('/users/' + currentUser + '/notes/' + this.$route.params.textbookId + '/' + this.page);
       if(value=="Me"){
-
+        console.log('me selected');
       } else if (value== "All"){
-
+        console.log('All selected');
       } else {        // Value = Friend name
+        console.log(value + ' - Friend selected');
+        firebase.database().ref('/users/' + currentUser + '/friends/')
+        .once('value', function(snap) {
+          snap.forEach(function(slist) {
+            let val = slist.val();
+            if(val.name == value) {
+              console.log(value + ' -- ID: ' + val.id );
+              self.uid = val.id;
+            }
+          });
+        });
 
       }
     },
@@ -258,38 +286,43 @@ export default {
       function (errorObject) {
         console.log(error);
       });
-
-
-    // load the dropDown from currentUser's friend list (+ 'me')
-    firebase.database().ref('/users/' + currentUser + '/friends/')
-    .once('value', function(snap) {
-      self.dropDown.push('Me');
-      
-      if(snap.exists()) {          // there is atleast 1 friend
-        self.dropDown.push('All');
-        snap.forEach(function(childSnap) {
-          let val = childSnap.val();
-          self.dropDown.push(val.name);
-        });
-      }
-      
-    });
     },
+    uid: function() {
+      let self = this;
+      console.log('------***** uid changed ************----------' + self.uid);
+      // Get notes from firebase
+      let ref = firebase.database().ref('/users/' + self.uid + '/notes/' + this.$route.params.textbookId + '/' + this.page);
+      ref.on("value", function(snapshot) {
+        self.notes = snapshot.val();
+        console.log(snapshot.val());
+        console.log(self.notes);
+      }, 
+      function (errorObject) {
+        console.log(error);
+      });
+    },
+
+    notes: function() {
+      console.log('------***** self.notes changed ************----------');
+    }
+
+
   },
   created: function() {
     
     let currentUser = firebase.auth().currentUser.uid;
     let self = this;
-
+    this.uid = currentUser;
+    /*
     // Get notes from firebase
-    let ref = firebase.database().ref('/users/' + currentUser + '/notes/' + this.$route.params.textbookId + '/' + this.page);
+    let ref = firebase.database().ref('/users/' + self.uid + '/notes/' + this.$route.params.textbookId + '/' + this.page);
     ref.on("value", function(snapshot) {
       self.notes = snapshot.val();
     }, 
     function (errorObject) {
       console.log(error);
     });
-
+  */
     // Reads the textbooks from the database and populates the textbooks array
     firebase.database().ref('/textbooks/' + this.$route.params.textbookId).once('value')
     .then(function(textbook) {
@@ -312,7 +345,7 @@ export default {
 
     // load the dropDown from currentUser's friend list (+ 'me')
     firebase.database().ref('/users/' + currentUser + '/friends/')
-    .once('value', function(snap) {
+    .on('value', function(snap) {
       self.dropDown.push('Me');
       
       if(snap.exists()) {          // there is atleast 1 friend
