@@ -21,30 +21,135 @@
           </div>
         </v-flex>
       </v-flex>
-      <v-flex xs2 sm2 id="notes">
-        <p class="subheading">Notes - Page {{page}}</p>
+      <v-flex xs2 sm2 id="sidebar">
+
+        <v-flex xs12 class="text-xs-center">
+            <v-chip :selected="sidebarMode === 'notes'" :outline="sidebarMode !== 'notes'" :class="{ lowOpacity: sidebarMode !== 'notes' }" color="blue darken-2" class="white--text" @click="toggleSidebarMode()">Notes</v-chip>
+            <v-chip :selected="sidebarMode === 'questions'" :outline="sidebarMode !== 'questions'" :class="{ lowOpacity: sidebarMode !== 'questions' }" color="blue darken-2" class="white--text" @click="toggleSidebarMode()">Questions</v-chip>
+        </v-flex>
+
+        <v-flex xs12 id="questions" v-if="sidebarMode === 'questions'">
+
+          <p class="subheading">Questions
+            <v-btn color="primary" small @click="newQuestion" flat>New Question</v-btn>
+          </p>
+          <v-divider></v-divider> 
+
+          <v-list two-line v-if="questionsArray.length != 0">
+            <template v-for="(question, index) in questionsArray">
+              <v-list-tile
+                avatar
+                ripple
+                @click="clickQuestion(index)"
+                :key="question.qId"
+              >
+                <v-list-tile-content>
+                  <v-list-tile-title>{{ question.question }}</v-list-tile-title>
+                  <v-list-tile-sub-title>{{ question.userName }}</v-list-tile-sub-title>
+                </v-list-tile-content>
+              </v-list-tile>
+              <v-divider v-if="index + 1 < questionsArray.length" :key="index"></v-divider>
+            </template>
+          </v-list>
+
+          <v-dialog v-model="questionDialog" max-width="500px">
+            <new-question :page-prop="page" @clicked="onClickChild"></new-question>
+          </v-dialog>
+
+          <v-dialog v-model="selectedQuestionDialog" max-width="600px">
+            
+            <v-container fluid>
+              <v-card>
+                <v-layout>
+                  <v-flex>
+                    <v-card-title primary-title>
+                      <h5 class="title">{{ selectedQuestion.question }}</h5>
+                    </v-card-title>
+                    <v-divider></v-divider>
+                    <v-card-text>
+                      <h6 v-html="selectedQuestion.body" class="subheading"></h6>
+                    </v-card-text>
+                  </v-flex>
+                </v-layout>
+                <v-layout>
+                  <v-flex>
+                    <v-card-actions>
+                      <v-spacer></v-spacer>
+                      <h6 class="caption ml-0">{{ selectedQuestion.userName }},</h6>
+                      <h6 class="caption ml-0">{{ getRelativeTime(selectedQuestion.date) }}</h6>
+                    </v-card-actions>
+                  </v-flex>
+                </v-layout>
+                
+                <v-layout v-if="bestAnswer == null">
+                  <v-subheader>
+                    <v-flex>
+                      <h6 class="subheading mt-4">There are no good answers, go to the forum to see all the answers or
+                        better yet, answer it yourself.
+                      </h6>
+                    </v-flex>
+                  </v-subheader>
+                </v-layout>
+
+                 <v-layout v-if="bestAnswer != null">
+                  <v-subheader>
+                    <v-flex>
+                      <h6 class="title">Best Answer</h6>
+                    </v-flex>
+                  </v-subheader>
+                </v-layout>
+
+                <v-layout v-if="bestAnswer != null">
+                  <v-flex>
+                    <v-card-title class="py-2 px-3">
+                      <h3>{{bestAnswer.userName}}</h3>
+                      <v-spacer></v-spacer>
+                      <h6 class="caption grey--text text--darken-1">{{ getRelativeTime(bestAnswer.date) }}</h6>
+                    </v-card-title>
+                    <v-divider></v-divider>
+                    <v-card-text>
+                      <h6 v-html="bestAnswer.answer" class="subheading ml-0"></h6>
+                    </v-card-text>
+                  </v-flex>
+                </v-layout>
+                <v-layout>
+                  <v-flex>
+                    <v-card-actions>
+                      <h6 class="caption ml-3" v-if="bestAnswer != null">Upvotes: {{ bestAnswer.voteScore }}</h6>
+                      <v-icon small color="green darken-1" v-if="bestAnswer != null && bestAnswer.accepted === true"
+                      >fas fa-check</v-icon>
+                      <v-spacer></v-spacer>
+                      <v-btn flat color="primary" @click="goToForum">Forum</v-btn>
+                    </v-card-actions>
+                  </v-flex>
+                </v-layout>
+
+              </v-card>
+            </v-container>
+
+          </v-dialog>
+
+        </v-flex>
+
+        <v-flex xs12 id="notes" v-if="sidebarMode === 'notes'">
+        <p class="subheading">Notes <span v-if="noteViewMode === 'page'" class="grey--text text--darken-1" @click="toggleNotesMode()">View All</span><span v-if="noteViewMode === 'all'" class="grey--text text--darken-1" @click="toggleNotesMode()">View page</span></p>
         <span>
           <v-tooltip bottom>
-            <v-icon slot="activator" @click="toggleShare">fa-share</v-icon>
+            <v-icon slot="activator" @click="">fa-share</v-icon>
             <span>Share</span>
           </v-tooltip>
-          <v-flex xs8 v-if="addFriend">
-              <v-text-field @keyup.enter="shareNote(note)" v-model="friend" label="Friend's email"  clearable></v-text-field>
-            </v-flex>
         </span>
         <v-divider></v-divider>
-        <v-select
-          :items="dropDown"
-          v-model="shareType"
+        <!--<v-select
+          :items="['All', 'Me', 'Anmol Singh']"
           label="Filter by author"
           single-line
           dense
           bottom
-          v-on:change="showNotes"
-        ></v-select>
+        ></v-select>-->
 
         <v-flex xs12>
-          <v-card class="new" v-bind:style="{ backgroundColor: '#' + selectedColour}">
+          <v-card class="new mb-4" v-bind:style="{ backgroundColor: '#' + selectedColour}">
             <v-card-title>
               <textarea @keyup.enter="addNote" v-model="newNote" placeholder="New note..."></textarea>
               <span v-if="newNote" v-on:click="addNote" style="position: absolute; bottom: 10px; right: 16px; color: #313DB2; cursor: pointer;">Add</span>
@@ -56,22 +161,46 @@
             </v-card-actions>
           </v-card>
 
-          <!-- Notes start here -->
-          <v-card v-for="(note, key) in notes"  v-bind:style="{ backgroundColor: '#' + note.colour}">
-            <v-icon v-on:click="deleteNote(key)">fa-trash</v-icon>
+          <!-- All notes start here -->
+          <div v-if="noteViewMode === 'all'" class="allnotes" v-for="(note, key) in notes">
+            <v-subheader class="pl-0" :key="key">Page {{key}}</v-subheader>
+            <v-divider></v-divider>
+            <v-card v-for="(noteInfo, noteKey) in note" v-bind:style="{ backgroundColor: '#' + noteInfo.colour}">
+              <v-icon v-on:click="deleteNote(noteKey)">fa-trash</v-icon>
+              <v-icon @click="toggleShare"  class="shareF" small right color="blue darken-4">chat</v-icon>
 
-            
+              <v-flex xs8 v-if="addFriend">
+                <v-text-field @keyup.enter="shareNote(note)" v-model="friend" label="Friend's email"  clearable></v-text-field>
+              </v-flex>
+              <v-card-title>
+                <p>{{noteInfo.text}}</p>
+              </v-card-title>
+              <span class="author">Add author name here</span>
+            </v-card>
+          </div>
+          
+          <!--Page notes start here-->
+          <v-subheader v-if="noteViewMode === 'page'" class="pl-0">Page {{page}}</v-subheader>
+          <v-divider v-if="noteViewMode === 'page'"></v-divider>
+          <v-card v-if="noteViewMode === 'page'" v-for="(note, key) in notes"  v-bind:style="{ backgroundColor: '#' + note.colour}">
+            <v-icon v-on:click="deleteNote(key)">fa-trash</v-icon>
+            <v-icon @click="toggleShare"  class="shareF" small right color="blue darken-4">chat</v-icon>
+
+            <v-flex xs8 v-if="addFriend">
+              <v-text-field @keyup.enter="shareNote(note)" v-model="friend" label="Friend's email"  clearable></v-text-field>
+            </v-flex>
             <v-card-title>
               <p v-html="getAnchormeText(note.text)"></p>
             </v-card-title>
             <span class="author">Created by: {{note.name}}</span>
           </v-card>
-
+          </v-flex>
         </v-flex>
       </v-flex>
       <v-flex xs10 sm10>
         <clip-loader :loading="!src" :color="'#7c7c7c'" :size="size"></clip-loader>
         <pdf ref="pdf" :src="src" :page="page" :rotate="rotate" @password="password" @progress="loadedRatio = $event" @error="error" @num-pages="numPages = $event"></pdf>
+        <div id="text-layer" class="textLayer" @mouseup="textSelection()"></div>
       </v-flex>
     </v-layout>
   </v-container>
@@ -81,12 +210,16 @@ import firebase from 'firebase'
 import pdf from 'vue-pdf'
 import ClipLoader from 'vue-spinner/src/ClipLoader.vue'
 import anchorme from "anchorme"
+import NewQuestion from "./NewQuestion.vue"
+
+var moment = require('moment');
 
 export default {
   name: 'pdfTester',
   components: {
     pdf: pdf,
-    ClipLoader
+    ClipLoader,
+    'new-question': NewQuestion
   },
   data () {
     return {
@@ -96,18 +229,28 @@ export default {
       numPages: 0,
       rotate: 0,
       textbook: {},
+      sidebarMode: 'notes',
       newNote: '',
       notes: {},
+      noteViewMode: 'page',
       colours: ['FFF9A2', '6FC0F7', 'EAB9EA', 'A5E7F9', 'D9F9A5'],
       selectedColour: 'FFF9A2',
       friend: '',
       addFriend: false,
       shareType: null,
       dropDown: [],           // loaded at created
-      uid: ''
+      uid: '',
+      questionDialog: false,
+      questionsArray: [],
+      selectedQuestion: '',
+      bestAnswer: '',
+      selectedQuestionDialog: false
     }
   },
   methods: {
+    textSelection: function() {
+      console.log(window.getSelection().toString(), this);
+    },
     getAnchormeText: function(text) {
       return anchorme(text);
     },
@@ -121,12 +264,26 @@ export default {
     },
     logContent: function() {
       let self = this;
-      console.log(this.$refs.pdf.pdf.getCurrentPage());
 
+      console.log(this.$refs.pdf.pdf.createTextLayer(this.rotate, this.$refs.pdf.$refs.canvas));
+
+      // Log page text
+      /*
       this.$refs.pdf.pdf.getCurrentPage().getTextContent().then(function(content) {
-          var text = content.items.map(item => item.str);
-          console.log(text);
-        })
+        var text = content.items.map(item => item.str);
+        console.log(text);
+        var textLayer = new TextLayerBuilder({
+          textLayerDiv : $textLayerDiv.get(0),
+          pageIndex : page_num - 1,
+          viewport : viewport
+        });
+
+        textLayer.setTextContent(textContent);
+        textLayer.render();
+      });
+      */
+
+
       //this.$refs.pdf.pdf.forEachPage(function(page) {
       //  console.log(page);
       //});
@@ -177,37 +334,27 @@ export default {
     shareNote: function(note) {
       let self = this;
       let currentUser = firebase.auth().currentUser.uid;
-      let name, email, id;
-      let frdEmail, frdName, frdId;
-      let isFriend = false;
-      let userRef = firebase.database().ref('/user/');
-      frdEmail = self.friend;
-      self.friend = '';
-
-      // get current user's name & email, and ID
+      let name;
       firebase.database().ref('/users/' + currentUser).once('value')
       .then(function(snapshot) {
-        let val = snapshot.val();
-        name =  val.name;
-        email = val.email;
-        id = snapshot.key;
-        // to be changed, with changed data structure
-        if (val.friends.friend == frdEmail)
-          isFriend = true;
+        name =  snapshot.val().name;
       });
-
-      // get friend's name (email already gotten)
       firebase.database().ref('/users/')
-      .once('value', function(snap) {
-      
-        snap.forEach(function(snapshot) {
-          let val = snapshot.val();
-
-          // to be changed, with changed data structure
-          if (val.email == frdEmail){
-            frdName = val.name;
-            frdId = snapshot.key;
-            console.log(val);
+      .once('value', function(snapshot) {
+        snapshot.forEach(function(childSnapshot) {
+          var childKey = childSnapshot.key;
+          var childData = childSnapshot.val();
+          // ...
+          if(self.friend == childData.email){
+            console.log("Friend email: " + self.friend);
+            console.log("childData: " + childData.email);
+            // friend's email matches, add the required data
+            firebase.database().ref('/users/' + childKey + '/friends/' + currentUser + '/notes/').child(self.$route.params.textbookId + '/' + self.page)
+            .push({
+              'text': note.text,
+              'colour': note.colour,
+              'Writer': name
+            })
           }
         })
       })
@@ -239,11 +386,94 @@ export default {
                   'id' : id
                 });
               }
+
             });
-          });
+          });   
         }
       });
     },
+
+    toggleSidebarMode: function() {
+      if (this.sidebarMode === 'notes')
+        this.sidebarMode = 'questions';
+      else
+        this.sidebarMode = 'notes';
+    },
+    toggleNotesMode: function() {
+      let currentUser = firebase.auth().currentUser.uid;
+      let self = this;
+      
+      if (this.noteViewMode === 'page') {
+        this.noteViewMode = 'all';
+        // Get ALL notes from firebase for current user
+        let ref = firebase.database().ref('/users/' + currentUser + '/notes/' + this.$route.params.textbookId);
+        ref.on("value", function(snapshot) {
+          self.notes = snapshot.val();
+          //let keys = Object.keys(snapshot.val());
+          //console.log(snapshot.val()[keys[0]]);
+        }, 
+        function (errorObject) {
+          console.log(error);
+        });
+      }
+
+      else {
+        this.noteViewMode = 'page';
+        // Get notes for current page from firebase
+        let ref = firebase.database().ref('/users/' + currentUser + '/notes/' + this.$route.params.textbookId + '/' + this.page);
+        ref.on("value", function(snapshot) {
+          self.notes = snapshot.val();
+        }, 
+        function (errorObject) {
+          console.log(error);
+        });
+      }
+    },
+
+    newQuestion: function() {
+      this.questionDialog = true;
+    },
+
+    onClickChild: function() {
+      // This is called when the user hits the submit button when asking a new question
+      this.questionDialog = false;
+    },
+
+    getQuestionsOnPage: function() {
+      let self = this;
+      let textbookId = self.$route.params.textbookId;
+
+      // Clear the questionsArray
+      self.questionsArray = [];
+
+      let qRef = firebase.database().ref('/forum/' + textbookId);
+
+      qRef.orderByChild("page").equalTo(self.page).on("value", function(questions) {
+        if (questions.exists()) {
+
+          // Clear the questionsArray
+          self.questionsArray = [];
+
+          questions.forEach(function(question) {
+            let questionData = question.val();
+            let questionKey = question.key;
+            
+            self.questionsArray.push({
+              'question': questionData.question,
+              'body': questionData.body,
+              'userName': questionData.userName,
+              'userId': questionData.userId,
+              'qId': questionKey,
+              'accepted': questionData.accepted,
+              'date': moment(questionData.date).local().format("dddd, MMMM Do YYYY, h:mm:ss a"),
+              'answers': questionData.answers
+
+            });
+          });   
+        }
+      });
+    },
+
 
     // This function needs update. This is triggerred due to v-select's property "v-on:change".
     // Next issue is displaying notes. Currently, notes shown in template. Can be changed and shown
@@ -269,8 +499,91 @@ export default {
           });
         });
 
-      }
+      });
+
+      //self.friend = '';
+
+
     },
+    getRelativeTime: function(time) {
+      return moment(time, "dddd, MMMM Do YYYY, h:mm:ss a").fromNow();
+    },
+
+    clickQuestion: function(index) {
+      let question = this.questionsArray[index];
+      let answers = question.answers;
+
+      // Save the selected question 
+      this.selectedQuestion = question;
+      // Look for the best answer 
+      if (answers != null) {
+        
+        // The best answer is considered the accepted answer
+        if (answers[question.accepted] != null) {
+
+            // Get the answer and the answer votes
+            let answer = answers[question.accepted];
+            let answerVotes = answer.votes;
+
+            // Calculate the upvotes 
+            let voteScore = 0;
+            if (answerVotes != null) {
+              Object.keys(answerVotes).forEach(function(voteKey) {
+                voteScore += answerVotes[voteKey].vote;
+              });
+            }
+
+            answer['voteScore'] = voteScore;
+            answer['accepted'] = true;
+            answer['date'] = moment(answer.date).local().format("dddd, MMMM Do YYYY, h:mm:ss a");
+
+            this.bestAnswer = answer;
+        }
+
+        // If it doesn't exist, pick the highest voted answer (>0)
+        else {
+          let questionAnswers = [];
+          Object.keys(answers).forEach(function(answerKey) {
+
+            // Get the answer and the answer votes
+            let answer = answers[answerKey];
+            let answerVotes = answer.votes;
+
+            // Calculate the upvotes 
+            let voteScore = 0;
+            if (answerVotes != null) {
+              Object.keys(answerVotes).forEach(function(voteKey) {
+                voteScore += answerVotes[voteKey].vote;
+              });
+            }
+
+            answer['voteScore'] = voteScore;
+            answer['date'] = moment(answer.date).local().format("dddd, MMMM Do YYYY, h:mm:ss a");
+            questionAnswers.push(answer);
+          });
+
+          // Find the most upvoted answer
+          let result = Math.max.apply(Math, questionAnswers.map(function(answer){ return answer.voteScore; }));
+
+          // If the most upvoted answer is more than 0, then show it to the user
+          if (result > 0) {
+            this.bestAnswer = questionAnswers.find(function(answer){ return answer.voteScore === result; });
+          } else {
+            this.bestAnswer = null;
+          }
+        }
+      } else {
+        this.bestAnswer = null;
+      }
+
+      this.selectedQuestionDialog = true;
+    },
+
+    goToForum: function() {
+      if (this.selectedQuestion.qId != null) {
+        this.$router.push('/textbook/' + this.$route.params.textbookId + '/forum/' + this.selectedQuestion.qId);
+      }
+    }
   },
   watch: {
     // whenever question changes, this function will run
@@ -286,7 +599,25 @@ export default {
       function (errorObject) {
         console.log(error);
       });
+
+
+      if (this.noteViewMode === 'page') {
+        // Get notes from firebase
+        let currentUser = firebase.auth().currentUser.uid;
+        let self = this;
+
+        let ref = firebase.database().ref('/users/' + currentUser + '/notes/' + this.$route.params.textbookId + '/' + this.page);
+        ref.on("value", function(snapshot) {
+          self.notes = snapshot.val();
+        }, 
+        function (errorObject) {
+          console.log(error);
+        });
+      }
+
+      this.getQuestionsOnPage();
     },
+
     uid: function() {
       let self = this;
       console.log('------***** uid changed ************----------' + self.uid);
@@ -304,7 +635,7 @@ export default {
 
     notes: function() {
       console.log('------***** self.notes changed ************----------');
-    }
+    },
 
 
   },
@@ -357,6 +688,30 @@ export default {
       }
       
     });
+
+    // Get the questions from the database for the current page
+    self.getQuestionsOnPage();
+
+    // Check if the url has a question associated with it
+    let qId = self.$route.query.qId;
+
+    // If it exists, get the question and go to the question page
+    if (qId != null) {
+      let qRef = firebase.database().ref('/forum/' + self.$route.params.textbookId + '/' + qId);
+      qRef.once('value', function(question) {
+        let questionData = question.val();
+        if (questionData != null && questionData.page != null) {
+          self.page = questionData.page;
+        }
+      });
+    }
+  },
+
+  beforeDestroy: function() {
+    let textbookId = this.$route.params.textbookId;
+
+    let qRef = firebase.database().ref('/forum/' + textbookId);
+    qRef.off();
   }
 }
 </script>
@@ -420,16 +775,56 @@ export default {
     cursor: pointer;
   }
 
-  #pdfViewer #notes {
+  #pdfViewer .lowOpacity {
+    opacity: .6;
+  }
+
+  #pdfViewer .chip, #pdfViewer .chip .chip__content {
+    cursor: pointer;
+  }
+
+  #pdfViewer .textLayer {
+    overflow: hidden;
+    opacity: 0.2;
+    line-height: 1.0;
+  }
+
+  #pdfViewer .textLayer ::selection {
+    background: #FFF9A2;
+  }
+
+  #pdfViewer .textLayer >>> div {
+    color: transparent;
+    position: absolute;
+    white-space: pre;
+    cursor: text;
+    -webkit-transform-origin: 0% 0%;
+    -moz-transform-origin: 0% 0%;
+    -o-transform-origin: 0% 0%;
+    -ms-transform-origin: 0% 0%;
+    transform-origin: 0% 0%;
+  }
+
+  #pdfViewer #sidebar {
     background: #EFEFEF;
     padding: 5px 10px;
     border-right: 1px solid #ABB7B7;
+  }
+
+  #pdfViewer #notes, #pdfViewer #questions {
+    overflow-y: scroll;
+    margin-top: 10px;
   }
 
   #pdfViewer #notes > p.subheading {
     margin-bottom: 5px;
     width: calc(100% - 20px);
     display: inline-block;
+  }
+
+  #pdfViewer #notes > p.subheading span {
+    font-size: .8rem;
+    cursor: pointer;
   }
 
   #pdfViewer #notes > .menu button {
@@ -456,6 +851,10 @@ export default {
     display: inline-block;
     cursor: pointer;
     vertical-align: top;
+  }
+
+  #pdfViewer #notes .allnotes .subheading {
+    padding-left: 0;
   }
 
   #pdfViewer #notes .card {
