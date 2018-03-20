@@ -166,7 +166,7 @@
           </v-card>
 
           <!-- All notes start here -->
-          <div v-if="noteViewMode === 'all'" class="allnotes" v-for="(note, key) in notes">
+          <div v-if="noteViewMode === 'all'" class="allnotes" v-for="(note, key) in notesList">
             <v-subheader class="pl-0" :key="key">Page {{key}}</v-subheader>
             <v-divider></v-divider>
             <v-card v-for="(noteInfo, noteKey) in note" v-bind:style="{ backgroundColor: '#' + noteInfo.colour}">
@@ -176,7 +176,7 @@
               <v-card-title>
                 <p>{{noteInfo.text}}</p>
               </v-card-title>
-              <span class="author">Add author name here</span>
+              <span class="author">Created by: {{noteInfo.name}}</span>
             </v-card>
           </div>
           
@@ -229,6 +229,7 @@ export default {
       textbook: {},
       sidebarMode: 'notes',
       newNote: '',
+      notesList: {},
       notes: {},
       noteViewMode: 'page',
       colours: ['FFF9A2', '6FC0F7', 'EAB9EA', 'A5E7F9', 'D9F9A5'],
@@ -405,9 +406,9 @@ export default {
       if (this.noteViewMode === 'page') {
         this.noteViewMode = 'all';
         // Get ALL notes from firebase for current user
-        let ref = firebase.database().ref('/users/' + currentUser + '/notes/' + this.$route.params.textbookId);
+        let ref = firebase.database().ref('/users/' + self.uid + '/notes/' + this.$route.params.textbookId);
         ref.on("value", function(snapshot) {
-          self.notes = snapshot.val();
+          self.notesList = snapshot.val();
           //let keys = Object.keys(snapshot.val());
           //console.log(snapshot.val()[keys[0]]);
         }, 
@@ -419,7 +420,7 @@ export default {
       else {
         this.noteViewMode = 'page';
         // Get notes for current page from firebase
-        let ref = firebase.database().ref('/users/' + currentUser + '/notes/' + this.$route.params.textbookId + '/' + this.page);
+        let ref = firebase.database().ref('/users/' + self.uid + '/notes/' + this.$route.params.textbookId + '/' + this.page);
         ref.on("value", function(snapshot) {
           self.notes = snapshot.val();
         }, 
@@ -658,6 +659,19 @@ export default {
       function (errorObject) {
         console.log(error);
       });
+
+
+      if (this.noteViewMode === 'all') {
+        // Get ALL notes from firebase for current user
+        let ref = firebase.database().ref('/users/' + self.uid + '/notes/' + this.$route.params.textbookId);
+        ref.on("value", function(snapshot) {
+          self.notesList = snapshot.val();
+        }, 
+        function (errorObject) {
+          console.log(error);
+        });
+      }
+
     },
 
     notes: function() {
