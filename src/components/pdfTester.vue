@@ -391,6 +391,7 @@ export default {
       });
     },
 
+
     toggleSidebarMode: function() {
       if (this.sidebarMode === 'notes')
         this.sidebarMode = 'questions';
@@ -479,12 +480,40 @@ export default {
     showNotes: function(value){
       let currentUser = firebase.auth().currentUser.uid;
       let self = this;
-      let myRef = firebase.database().ref('/users/' + currentUser + '/notes/' + this.$route.params.textbookId + '/' + this.page);
-      if(value=="Me"){
+      let idList = [];
+      let myRef = firebase.database().ref('/users/' + currentUser + '/notes/' + self.$route.params.textbookId + '/' + self.page);
+      if(value=="Me"){    // Show current user's notes
         console.log('me selected');
+        self.uid = currentUser;
       } else if (value== "All"){
         console.log('All selected');
-      } else {        // Value = Friend name
+        
+        firebase.database().ref('/users/' + currentUser + '/friends/')
+        .once('value', function (snap) {
+          snap.forEach(function (friends) {
+            idList.push(friends.val().id);
+          });
+        });
+        let i = '';
+      //self.notes = {};
+        for (i in idList) {
+
+          // Get notes from firebase
+          console.log('************ Frd id: ' + idList[i]);
+          let ref = firebase.database().ref('/users/' + idList[i] + '/notes/' + self.$route.params.textbookId + '/' + self.page);
+          ref.on("value", function(snapshot) {
+            console.log(snapshot.val());
+            console.log(self.notes);
+            self.notes = (snapshot.val());
+          }, 
+          function (errorObject) {
+            console.log(error);
+          });
+        }
+
+
+
+      } else {        // Value = One Friend's name
         console.log(value + ' - Friend selected');
         firebase.database().ref('/users/' + currentUser + '/friends/')
         .once('value', function(snap) {
@@ -678,7 +707,7 @@ export default {
       self.dropDown.push('Me');
       
       if(snap.exists()) {          // there is atleast 1 friend
-        self.dropDown.push('All');
+        //self.dropDown.push('All');
         snap.forEach(function(childSnap) {
           let val = childSnap.val();
           self.dropDown.push(val.name);
