@@ -135,18 +135,22 @@
         <p class="subheading">Notes <span v-if="noteViewMode === 'page'" class="grey--text text--darken-1" @click="toggleNotesMode()">View All</span><span v-if="noteViewMode === 'all'" class="grey--text text--darken-1" @click="toggleNotesMode()">View page</span></p>
         <span>
           <v-tooltip bottom>
-            <v-icon slot="activator" @click="">fa-share</v-icon>
+            <v-icon slot="activator" @click="toggleShare">fa-share</v-icon>
             <span>Share</span>
           </v-tooltip>
+          <v-flex xs8 v-if="addFriend">
+              <v-text-field @keyup.enter="shareNote(note)" v-model="friend" label="Friend's email"  clearable></v-text-field>
+            </v-flex>
         </span>
         <v-divider></v-divider>
-        <!--<v-select
-          :items="['All', 'Me', 'Anmol Singh']"
+        <v-select
+          :items="dropDown"
           label="Filter by author"
           single-line
           dense
           bottom
-        ></v-select>-->
+          v-on:change="showNotes"
+        ></v-select>
 
         <v-flex xs12>
           <v-card class="new mb-4" v-bind:style="{ backgroundColor: '#' + selectedColour}">
@@ -169,9 +173,6 @@
               <v-icon v-on:click="deleteNote(noteKey)">fa-trash</v-icon>
               <v-icon @click="toggleShare"  class="shareF" small right color="blue darken-4">chat</v-icon>
 
-              <v-flex xs8 v-if="addFriend">
-                <v-text-field @keyup.enter="shareNote(note)" v-model="friend" label="Friend's email"  clearable></v-text-field>
-              </v-flex>
               <v-card-title>
                 <p>{{noteInfo.text}}</p>
               </v-card-title>
@@ -186,9 +187,6 @@
             <v-icon v-on:click="deleteNote(key)">fa-trash</v-icon>
             <v-icon @click="toggleShare"  class="shareF" small right color="blue darken-4">chat</v-icon>
 
-            <v-flex xs8 v-if="addFriend">
-              <v-text-field @keyup.enter="shareNote(note)" v-model="friend" label="Friend's email"  clearable></v-text-field>
-            </v-flex>
             <v-card-title>
               <p v-html="getAnchormeText(note.text)"></p>
             </v-card-title>
@@ -499,7 +497,7 @@ export default {
           });
         });
 
-      });
+      }
 
       //self.friend = '';
 
