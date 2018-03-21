@@ -2,24 +2,29 @@
   <v-container fill-height fluid id="pdfViewer">
     <v-layout row wrap>
       <v-flex xs12 class="tools">
-          <div class="pageShift">
-            <span v-on:click="prevPage"><v-icon>fa-chevron-left</v-icon></span>
-            <span v-on:click="nextPage"><v-icon>fa-chevron-right</v-icon></span>
-            <span style="background: none; color: #555;">Jump to:</span>
-            <select v-model.number="page">
-              <option v-for="pageNum in numPages">{{pageNum}}</option>
-            </select>
-          </div>
-          <div class="pageNumber">
-            <span>Page {{page}} of {{numPages}}</span>
-          </div>
-          <div class="icons">
-            <v-icon small v-on:click="rotate -= 90">fa-rotate-left</v-icon>
-            <v-icon small v-on:click="rotate += 90">fa-rotate-right</v-icon>
-            <v-icon small v-on:click="$refs.pdf.print()">fa-print</v-icon>
-            <v-icon small v-on:click="logContent">fa-pencil</v-icon>
-          </div>
-        </v-flex>
+        <div class="pageShift">
+          <span v-on:click="prevPage"><v-icon>fa-chevron-left</v-icon></span>
+          <span v-on:click="nextPage"><v-icon>fa-chevron-right</v-icon></span>
+          <span style="background: none; color: #555;">Jump to:</span>
+          <select v-model.number="page">
+            <option v-for="pageNum in numPages">{{pageNum}}</option>
+          </select>
+        </div>
+        <div class="pageNumber">
+          <span>Page {{page}} of {{numPages}}</span>
+        </div>
+        <div class="icons">
+          <v-icon small v-on:click="rotate -= 90">fa-rotate-left</v-icon>
+          <v-icon small v-on:click="rotate += 90">fa-rotate-right</v-icon>
+          <v-icon small v-on:click="$refs.pdf.print()">fa-print</v-icon>
+          <v-icon small v-on:click="toggleHighlighting(); snackbar = true" v-bind:class="{selected: highlightingMode === true}">fa-pencil</v-icon>
+        </div>
+        <v-snackbar v-model="snackbar" v-if="highlightingMode === true" :timeout="2000" :top="true" :right="true">
+          Highlighting enabled
+        </v-snackbar>
+        <v-snackbar v-model="snackbar" v-if="highlightingMode === false" :timeout="2000" :top="true" :right="true">
+          Highlighting disabled
+        </v-snackbar>
       </v-flex>
       <v-flex xs2 sm2 id="sidebar">
 
@@ -199,8 +204,8 @@
       </v-flex>
       <v-flex xs10 sm10>
         <clip-loader :loading="!src" :color="'#7c7c7c'" :size="size"></clip-loader>
-        <pdf ref="pdf" :src="src" :page="page" :rotate="rotate" @password="password" @progress="loadedRatio = $event" @error="error" @num-pages="numPages = $event"></pdf>
-        <div id="text-layer" class="textLayer" @mouseup="textSelection()"></div>
+        <pdf ref="pdf" :src="src" :page="page" :rotate="rotate" @num-pages="numPages = $event"></pdf>
+        <div id="text-layer" class="textLayer" @mousedown="startTextSelection($event)" @mouseup="endTextSelection"></div>
       </v-flex>
     </v-layout>
   </v-container>
@@ -241,10 +246,149 @@ export default {
       questionsArray: [],
       selectedQuestion: '',
       bestAnswer: '',
-      selectedQuestionDialog: false
+      selectedQuestionDialog: false,
+      highlightingMode: false,
+      startingPoint: {},
+      snackbar: false
     }
   },
   methods: {
+    toggleHighlighting: function() {
+      if (this.highlightingMode === false) {
+        this.$refs.pdf.pdf.createTextLayer(this.rotate, this.$refs.pdf.$refs.canvas);
+        this.highlightingMode = true;
+      }
+      else {
+        this.highlightingMode = false;
+        var textLayer = document.getElementById("text-layer");
+        textLayer.removeAttribute("style");
+        console.log(textLayer);
+        textLayer.innerHTML = "";
+      }
+    },
+    startTextSelection: function(event) {
+      console.log(event.target.getBoundingClientRect());
+      this.startingPoint = {"X": event.pageX, "Y": event.target.getBoundingClientRect().y + window.scrollY, "bounding": event.target.getBoundingClientRect()};
+    },
+    endTextSelection: function(event) {
+      let self = this;
+      // No text selected
+      if (window.getSelection().toString() === "")
+        return;
+      
+      var endingPoint = {"X": event.pageX, "Y": event.target.getBoundingClientRect().y + window.scrollY, "bounding": event.target.getBoundingClientRect()};
+
+      var div = document.createElement('div');
+
+      // Single line selection
+      if (event.target.getBoundingClientRect().y + window.scrollY === this.startingPoint.Y) {
+
+        var width = Math.abs(endingPoint.X - this.startingPoint.X);
+        var height = event.target.clientHeight + 2;
+        if (endingPoint.X > this.startingPoint.X)
+          var left = Math.floor(this.startingPoint.X);
+        else
+          var left = Math.floor(endingPoint.X);
+        var top = this.startingPoint.Y;
+
+        var css = {
+          position: "absolute",
+          width: width + "px",
+          height: height + "px",
+          left: left + "px",
+          top: top + "px",
+          backgroundColor: "yellow",
+          opacity: .4
+        }
+        Object.assign(div.style,css);
+        window.getSelection().removeAllRanges();
+
+        document.body.appendChild(div);
+
+      }
+
+      // Multi-line selection
+      else {
+        // Highlighting from top to bottom
+        if (endingPoint.Y > this.startingPoint.Y) {
+          var numOfLines = Math.ceil((endingPoint.Y - this.startingPoint.Y) / this.startingPoint.bounding.height);
+          console.log(numOfLines);
+
+          // Highlight first line
+
+          var width = this.startingPoint.bounding.width - (this.startingPoint.X - this.startingPoint.bounding.x);
+          var left = Math.floor(this.startingPoint.X);
+          var height = event.target.clientHeight + 2;
+          var top = this.startingPoint.Y;
+
+          var css = {
+            position: "absolute",
+            width: width + "px",
+            height: height + "px",
+            left: left + "px",
+            top: top + "px",
+            backgroundColor: "yellow",
+            opacity: .4
+          }
+          Object.assign(div.style,css);
+          window.getSelection().removeAllRanges();
+
+          document.body.appendChild(div);
+
+          // Highlight last line
+          div = document.createElement('div')
+          
+          width = endingPoint.X - endingPoint.bounding.x;
+          height = event.target.clientHeight + 2;
+          left = Math.floor(endingPoint.bounding.x);
+          top = endingPoint.Y;
+
+          css = {
+            position: "absolute",
+            width: width + "px",
+            height: height + "px",
+            left: left + "px",
+            top: top + "px",
+            backgroundColor: "yellow",
+            opacity: .4
+          }
+          Object.assign(div.style,css);
+          window.getSelection().removeAllRanges();
+
+          document.body.appendChild(div);
+        }
+
+        // Highlight in-between lines
+        for (var i=0; i < numOfLines - 2; i++) {
+          div = document.createElement('div')
+
+          if (endingPoint.bounding.width >= this.startingPoint.bounding.width)
+            width = endingPoint.bounding.width;
+          else
+            width = this.startingPoint.bounding.width;
+
+          height = event.target.clientHeight + 2;
+          left = Math.floor(endingPoint.bounding.x);
+          top = this.startingPoint.bounding.y + height * (i+1);
+
+          css = {
+            position: "absolute",
+            width: width + "px",
+            height: height + "px",
+            left: left + "px",
+            top: top + "px",
+            backgroundColor: "yellow",
+            opacity: .4
+          }
+          Object.assign(div.style,css);
+          window.getSelection().removeAllRanges();
+
+          document.body.appendChild(div);
+        }
+
+      }
+
+    },
     textSelection: function() {
       console.log(window.getSelection().toString(), this);
     },
@@ -261,8 +405,7 @@ export default {
     },
     logContent: function() {
       let self = this;
-
-      console.log(this.$refs.pdf.pdf.createTextLayer(this.rotate, this.$refs.pdf.$refs.canvas));
+      this.$refs.pdf.pdf.createTextLayer(this.rotate, this.$refs.pdf.$refs.canvas);
 
       // Log page text
       /*
@@ -407,6 +550,8 @@ export default {
           // Clear the questionsArray
           self.questionsArray = [];
 
+          console.log("here");
+
           questions.forEach(function(question) {
             let questionData = question.val();
             let questionKey = question.key;
@@ -527,7 +672,7 @@ export default {
       this.getQuestionsOnPage();
     },
   },
-  created: function() {
+  mounted: function() {
     
     let currentUser = firebase.auth().currentUser.uid;
     let self = this;
@@ -633,6 +778,19 @@ export default {
     cursor: pointer;
   }
 
+  #pdfViewer .tools .icons i.selected {
+    color: #3B87D8;
+  }
+
+  #pdfViewer .tools .highlighting {
+    width: 10%;
+  }
+
+  #pdfViewer .tools .highlighting span {
+    display: inline-block;
+    margin-left: 10px;
+  }
+
   #pdfViewer .lowOpacity {
     opacity: .6;
   }
@@ -643,7 +801,7 @@ export default {
 
   #pdfViewer .textLayer {
     overflow: hidden;
-    opacity: 0.2;
+    opacity: 0;
     line-height: 1.0;
   }
 
@@ -764,7 +922,7 @@ export default {
     border-top: 1px solid #DAD9DB;
   }
 
-  #pdfViewer #notes .card.new .card__actions span {
+  #pdfViewer #notes .card.new .card__actions span, #pdfViewer .tools .highlighting span {
     width: 20px;
     height: 20px;
     border-radius: 50%;
@@ -773,7 +931,7 @@ export default {
     opacity: .6;
   }
 
-  #pdfViewer #notes .card.new .card__actions span.selected {
+  #pdfViewer #notes .card.new .card__actions span.selected, #pdfViewer .tools .highlighting span.selected {
     border: 2px solid #777;
     opacity: 1;
   }
