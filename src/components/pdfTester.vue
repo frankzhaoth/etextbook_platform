@@ -36,9 +36,9 @@
         <v-flex xs12 id="questions" v-if="sidebarMode === 'questions'">
 
           <p class="subheading">Questions
-            <v-btn color="primary" small @click="newQuestion()" flat>New Question</v-btn>
+            <v-btn color="primary" small @click="newQuestion" flat>New Question</v-btn>
           </p>
-          <v-divider></v-divider>
+          <v-divider></v-divider> 
 
           <v-list two-line v-if="questionsArray.length != 0">
             <template v-for="(question, index) in questionsArray">
@@ -89,7 +89,7 @@
                 <v-layout v-if="bestAnswer == null">
                   <v-subheader>
                     <v-flex>
-                      <h6 class="subheading">There are no good answers, go to the forum to see all the answers or
+                      <h6 class="subheading mt-4">There are no good answers, go to the forum to see all the answers or
                         better yet, answer it yourself.
                       </h6>
                     </v-flex>
@@ -140,18 +140,22 @@
         <p class="subheading">Notes <span v-if="noteViewMode === 'page'" class="grey--text text--darken-1" @click="toggleNotesMode()">View All</span><span v-if="noteViewMode === 'all'" class="grey--text text--darken-1" @click="toggleNotesMode()">View page</span></p>
         <span>
           <v-tooltip bottom>
-            <v-icon slot="activator" @click="">fa-share</v-icon>
+            <v-icon slot="activator" @click="toggleShare">fa-share</v-icon>
             <span>Share</span>
           </v-tooltip>
+          <v-flex xs8 v-if="addFriend">
+              <v-text-field @keyup.enter="shareNote(note)" v-model="friend" label="Friend's email"  clearable></v-text-field>
+            </v-flex>
         </span>
         <v-divider></v-divider>
-        <!--<v-select
-          :items="['All', 'Me', 'Anmol Singh']"
+        <v-select
+          :items="dropDown"
           label="Filter by author"
           single-line
           dense
           bottom
-        ></v-select>-->
+          v-on:change="showNotes"
+        ></v-select>
 
         <v-flex xs12>
           <v-card class="new mb-4" v-bind:style="{ backgroundColor: '#' + selectedColour}">
@@ -167,20 +171,17 @@
           </v-card>
 
           <!-- All notes start here -->
-          <div v-if="noteViewMode === 'all'" class="allnotes" v-for="(note, key) in notes">
+          <div v-if="noteViewMode === 'all'" class="allnotes" v-for="(note, key) in notesList">
             <v-subheader class="pl-0" :key="key">Page {{key}}</v-subheader>
             <v-divider></v-divider>
             <v-card v-for="(noteInfo, noteKey) in note" v-bind:style="{ backgroundColor: '#' + noteInfo.colour}">
               <v-icon v-on:click="deleteNote(noteKey)">fa-trash</v-icon>
               <v-icon @click="toggleShare"  class="shareF" small right color="blue darken-4">chat</v-icon>
 
-              <v-flex xs8 v-if="addFriend">
-                <v-text-field @keyup.enter="shareNote(note)" v-model="friend" label="Friend's email"  clearable></v-text-field>
-              </v-flex>
               <v-card-title>
                 <p>{{noteInfo.text}}</p>
               </v-card-title>
-              <span class="author">Add author name here</span>
+              <span class="author">Created by: {{noteInfo.name}}</span>
             </v-card>
           </div>
           
@@ -191,13 +192,10 @@
             <v-icon v-on:click="deleteNote(key)">fa-trash</v-icon>
             <v-icon @click="toggleShare"  class="shareF" small right color="blue darken-4">chat</v-icon>
 
-            <v-flex xs8 v-if="addFriend">
-              <v-text-field @keyup.enter="shareNote(note)" v-model="friend" label="Friend's email"  clearable></v-text-field>
-            </v-flex>
             <v-card-title>
               <p v-html="getAnchormeText(note.text)"></p>
             </v-card-title>
-            <span class="author">Add author name here</span>
+            <span class="author">Created by: {{note.name}}</span>
           </v-card>
           </v-flex>
         </v-flex>
@@ -236,12 +234,16 @@ export default {
       textbook: {},
       sidebarMode: 'notes',
       newNote: '',
+      notesList: {},
       notes: {},
       noteViewMode: 'page',
       colours: ['FFF9A2', '6FC0F7', 'EAB9EA', 'A5E7F9', 'D9F9A5'],
       selectedColour: 'FFF9A2',
       friend: '',
       addFriend: false,
+      shareType: null,
+      dropDown: [],           // loaded at created
+      uid: '',
       questionDialog: false,
       questionsArray: [],
       selectedQuestion: '',
@@ -440,15 +442,29 @@ export default {
     addNote: function() {
       let currentUser = firebase.auth().currentUser.uid;
       let self = this;
+      let name;
 
-      firebase.database().ref('/users/' + currentUser + '/notes/' + this.$route.params.textbookId + '/' + this.page).push({
-        'text': this.newNote,
-        'colour': self.selectedColour
+      firebase.database().ref('/users/' + currentUser).once('value', function(snap) {
+        let val = snap.val();
+        name = val.name;
+        console.log("name1: " + name);
+      })
+      .then(function() {
+
+        console.log("name: " + name);
+        firebase.database().ref('/users/' + currentUser + '/notes/' + self.$route.params.textbookId + '/' + self.page).push({
+          'text': self.newNote,
+          'colour': self.selectedColour,
+          'name' : name
+        });
+        console.log("name2: " + name);
+
+        self.newNote = '';
       });
-      this.newNote = '';
     },
     deleteNote: function(key) {
       let currentUser = firebase.auth().currentUser.uid;
+      console.log('entering delete fcn');
       firebase.database().ref('/users/' + currentUser + '/notes/' + this.$route.params.textbookId + '/' + this.page + '/' + key).remove();
     },
     toggleShare: function() {
@@ -482,13 +498,44 @@ export default {
               'Writer': name
             })
           }
-        });
+        })
+      })
+      .then( function() {
+        if (!isFriend)
+        {
+          firebase.database().ref('/users/' + currentUser + '/friends/')
+          .push({
+            'email' : frdEmail,
+            'name' : frdName,
+            'id' : frdId
+          });
+          
+          firebase.database().ref('/users/')
+          .once('value', function(snapshot) {
+            snapshot.forEach(function(childSnapshot) {
+              var childKey = childSnapshot.key;
+              var childData = childSnapshot.val();
+              console.log("Email: " + childData.email);
+
+              if(frdEmail == childData.email){
+                console.log("Friend email: " + frdEmail);
+                console.log("childData: " + childData.email);
+                // friend's email matches, add the required data
+                firebase.database().ref('/users/' + childKey + '/friends/')
+                .push({
+                  'email': email,
+                  'name' : name,
+                  'id' : id
+                });
+              }
+
+            });
+          });   
+        }
       });
-
-      //self.friend = '';
-
-
     },
+
+
     toggleSidebarMode: function() {
       if (this.sidebarMode === 'notes')
         this.sidebarMode = 'questions';
@@ -502,9 +549,9 @@ export default {
       if (this.noteViewMode === 'page') {
         this.noteViewMode = 'all';
         // Get ALL notes from firebase for current user
-        let ref = firebase.database().ref('/users/' + currentUser + '/notes/' + this.$route.params.textbookId);
+        let ref = firebase.database().ref('/users/' + self.uid + '/notes/' + this.$route.params.textbookId);
         ref.on("value", function(snapshot) {
-          self.notes = snapshot.val();
+          self.notesList = snapshot.val();
           //let keys = Object.keys(snapshot.val());
           //console.log(snapshot.val()[keys[0]]);
         }, 
@@ -516,7 +563,7 @@ export default {
       else {
         this.noteViewMode = 'page';
         // Get notes for current page from firebase
-        let ref = firebase.database().ref('/users/' + currentUser + '/notes/' + this.$route.params.textbookId + '/' + this.page);
+        let ref = firebase.database().ref('/users/' + self.uid + '/notes/' + this.$route.params.textbookId + '/' + this.page);
         ref.on("value", function(snapshot) {
           self.notes = snapshot.val();
         }, 
@@ -565,12 +612,72 @@ export default {
               'accepted': questionData.accepted,
               'date': moment(questionData.date).local().format("dddd, MMMM Do YYYY, h:mm:ss a"),
               'answers': questionData.answers
+
             });
           });   
         }
       });
     },
 
+
+    // This function needs update. This is triggerred due to v-select's property "v-on:change".
+    // Next issue is displaying notes. Currently, notes shown in template. Can be changed and shown
+    // using v-html later, may be. That's my current thought.
+    showNotes: function(value){
+      let currentUser = firebase.auth().currentUser.uid;
+      let self = this;
+      let idList = [];
+      let myRef = firebase.database().ref('/users/' + currentUser + '/notes/' + self.$route.params.textbookId + '/' + self.page);
+      if(value=="Me"){    // Show current user's notes
+        console.log('me selected');
+        self.uid = currentUser;
+      } else if (value== "All"){
+        console.log('All selected');
+        
+        firebase.database().ref('/users/' + currentUser + '/friends/')
+        .once('value', function (snap) {
+          snap.forEach(function (friends) {
+            idList.push(friends.val().id);
+          });
+        });
+        let i = '';
+      //self.notes = {};
+        for (i in idList) {
+
+          // Get notes from firebase
+          console.log('************ Frd id: ' + idList[i]);
+          let ref = firebase.database().ref('/users/' + idList[i] + '/notes/' + self.$route.params.textbookId + '/' + self.page);
+          ref.on("value", function(snapshot) {
+            console.log(snapshot.val());
+            console.log(self.notes);
+            self.notes = (snapshot.val());
+          }, 
+          function (errorObject) {
+            console.log(error);
+          });
+        }
+
+
+
+      } else {        // Value = One Friend's name
+        console.log(value + ' - Friend selected');
+        firebase.database().ref('/users/' + currentUser + '/friends/')
+        .once('value', function(snap) {
+          snap.forEach(function(slist) {
+            let val = slist.val();
+            if(val.name == value) {
+              console.log(value + ' -- ID: ' + val.id );
+              self.uid = val.id;
+            }
+          });
+        });
+
+      }
+
+      //self.friend = '';
+
+
+    },
     getRelativeTime: function(time) {
       return moment(time, "dddd, MMMM Do YYYY, h:mm:ss a").fromNow();
     },
@@ -581,7 +688,6 @@ export default {
 
       // Save the selected question 
       this.selectedQuestion = question;
-
       // Look for the best answer 
       if (answers != null) {
         
@@ -655,6 +761,19 @@ export default {
   watch: {
     // whenever question changes, this function will run
     page: function (newPage, oldPage) {
+      // Get notes from firebase
+      let currentUser = firebase.auth().currentUser.uid;
+      let self = this;
+
+      let ref = firebase.database().ref('/users/' + currentUser + '/notes/' + this.$route.params.textbookId + '/' + this.page);
+      ref.on("value", function(snapshot) {
+        self.notes = snapshot.val();
+      }, 
+      function (errorObject) {
+        console.log(error);
+      });
+
+
       if (this.noteViewMode === 'page') {
         // Get notes from firebase
         let currentUser = firebase.auth().currentUser.uid;
@@ -671,21 +790,56 @@ export default {
 
       this.getQuestionsOnPage();
     },
+
+    uid: function() {
+      let self = this;
+      console.log('------***** uid changed ************----------' + self.uid);
+      // Get notes from firebase
+      let ref = firebase.database().ref('/users/' + self.uid + '/notes/' + this.$route.params.textbookId + '/' + this.page);
+      ref.on("value", function(snapshot) {
+        self.notes = snapshot.val();
+        console.log(snapshot.val());
+        console.log(self.notes);
+      }, 
+      function (errorObject) {
+        console.log(error);
+      });
+
+
+      if (this.noteViewMode === 'all') {
+        // Get ALL notes from firebase for current user
+        let ref = firebase.database().ref('/users/' + self.uid + '/notes/' + this.$route.params.textbookId);
+        ref.on("value", function(snapshot) {
+          self.notesList = snapshot.val();
+        }, 
+        function (errorObject) {
+          console.log(error);
+        });
+      }
+
+    },
+
+    notes: function() {
+      console.log('------***** self.notes changed ************----------');
+    },
+
+
   },
   mounted: function() {
     
     let currentUser = firebase.auth().currentUser.uid;
     let self = this;
-
+    this.uid = currentUser;
+    /*
     // Get notes from firebase
-    let ref = firebase.database().ref('/users/' + currentUser + '/notes/' + this.$route.params.textbookId + '/' + this.page);
+    let ref = firebase.database().ref('/users/' + self.uid + '/notes/' + this.$route.params.textbookId + '/' + this.page);
     ref.on("value", function(snapshot) {
       self.notes = snapshot.val();
     }, 
     function (errorObject) {
       console.log(error);
     });
-
+  */
     // Reads the textbooks from the database and populates the textbooks array
     firebase.database().ref('/textbooks/' + this.$route.params.textbookId).once('value')
     .then(function(textbook) {
@@ -706,8 +860,37 @@ export default {
       console.log(error);
     });
 
+    // load the dropDown from currentUser's friend list (+ 'me')
+    firebase.database().ref('/users/' + currentUser + '/friends/')
+    .on('value', function(snap) {
+      self.dropDown.push('Me');
+      
+      if(snap.exists()) {          // there is atleast 1 friend
+        //self.dropDown.push('All');
+        snap.forEach(function(childSnap) {
+          let val = childSnap.val();
+          self.dropDown.push(val.name);
+        });
+      }
+      
+    });
+
     // Get the questions from the database for the current page
     self.getQuestionsOnPage();
+
+    // Check if the url has a question associated with it
+    let qId = self.$route.query.qId;
+
+    // If it exists, get the question and go to the question page
+    if (qId != null) {
+      let qRef = firebase.database().ref('/forum/' + self.$route.params.textbookId + '/' + qId);
+      qRef.once('value', function(question) {
+        let questionData = question.val();
+        if (questionData != null && questionData.page != null) {
+          self.page = questionData.page;
+        }
+      });
+    }
   },
 
   beforeDestroy: function() {

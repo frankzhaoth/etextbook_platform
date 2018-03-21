@@ -62,52 +62,53 @@ export default {
   methods: {
   	submit: function() {
 
+      let self = this;
+      let textbookId = self.$route.params.textbookId;
+      let routeName = self.$route.name;
+
+      let userId = null;
+      if (firebase.auth().currentUser != null) {
+        userId = firebase.auth().currentUser.uid;
+      } else {
+        self.$router.replace('/login');
+      }
+
       // If the input is not valid, return
       if (!this.validateForm()) {
         return;
       }
-
-  	  let self = this;
-  	  let textbookId = self.$route.params.textbookId;
-  	  let userId = firebase.auth().currentUser.uid;
-      let routeName = self.$route.name;
-
-  	  if (userId != null) {
         
-        // Get the name of the user
-        firebase.database().ref('/users/' + userId).once('value').then(function(user) {
-          let userName = user.val().name;
+      // Get the name of the user
+      firebase.database().ref('/users/' + userId).once('value').then(function(user) {
+        let userName = user.val().name;
 
-          // If the question has an associate page, get it from the props
-          let page = self.pageProp;
+        // If the question has an associate page, get it from the props
+        let page = self.pageProp;
 
-          // If there is no page associated with it, set it to null
-          if (page == null) {
-            page = null;
-          }
+        // If there is no page associated with it, set it to null
+        if (page == null) {
+          page = null;
+        }
 
-          // Store the question on the database
-          let ref = firebase.database().ref('forum/' + textbookId).push({
-          'question': self.question,
-          'body': self.body,
-          'userName': userName,
-          'userId': userId,
-          'date': firebase.database.ServerValue.TIMESTAMP,
-          'page': page
-          });
-
-          // This component is being reused in the textbook view url and the new question url
-          if (routeName === "pdfTester") {
-            // When we are in the textbook view url, we notify the parent that the question was submitted
-            self.notifyParent();
-          } else {
-            // We are in the new question url, so redirect to the question page
-            self.$router.replace('/textbook/' + self.$route.params.textbookId + '/forum/' + ref.key);
-          }
+        // Store the question on the database
+        let ref = firebase.database().ref('forum/' + textbookId).push({
+        'question': self.question,
+        'body': self.body,
+        'userName': userName,
+        'userId': userId,
+        'date': firebase.database.ServerValue.TIMESTAMP,
+        'page': page
         });
-  	  } else {
-  	  	console.log("currentUser returned null");
-  	  }
+
+        // This component is being reused in the textbook view url and the new question url
+        if (routeName === "pdfTester") {
+          // When we are in the textbook view url, we notify the parent that the question was submitted
+          self.notifyParent();
+        } else {
+          // We are in the new question url, so redirect to the question page
+          self.$router.replace('/textbook/' + self.$route.params.textbookId + '/forum/' + ref.key);
+        }
+      });
   	},
 
     validateForm: function() {
