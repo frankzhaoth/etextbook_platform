@@ -2,6 +2,11 @@
   <div id="dashboard">
     <v-container grid-list-lg>
       <v-layout row wrap>
+        <v-flex xs12>
+          <v-card-text>
+            <v-text-field v-model="searchbookname" placeholder="search Textbook by name" ></v-text-field>
+          </v-card-text>
+        </v-flex>
         <v-flex xs12 v-if="Object.keys(this.favourites).length > 0">
           <h2>My Favourites</h2>
           <hr/>
@@ -21,7 +26,7 @@
           <h2>Textbook Collection</h2>
           <hr/>
         </v-flex>
-        <v-flex xs6 sm3 md2 lg2 v-for="textbook in textbooks" :key="textbook.key">
+        <v-flex xs6 sm3 md2 lg2 v-for="textbook in filteredBook" :key="textbook.key">
           <v-card>
             <v-card-media v-on:click="clickTextbook(textbook.key)" :src="textbook.cover" height="200px"></v-card-media>
             <v-card-title>{{ textbook.title }}</v-card-title>
@@ -40,10 +45,11 @@
 import firebase from 'firebase'
 
 export default {
-  
+
   name: 'Dashboard',
   data () {
     return {
+      searchbookname: '',
       textbooks: [],
       favourites: {}
     }
@@ -59,10 +65,10 @@ export default {
     clickTextbook: function(key) {
       this.$router.push('/textbook/' + key);
     },
-    
+
     viewTextbook: function(key) {
       this.$router.push('/textbook/' + key + "/view");
-    },   
+    },
 
     getTextbook: function(key) {
       for (var index in this.textbooks) {
@@ -91,12 +97,20 @@ export default {
     },
 
   },
-    
+
+  computed:{
+    filteredBook:function(){
+      return this.textbooks.filter((textbook) => {
+        return textbook.title.match(this.searchbookname);
+      });
+    }
+  },
+
   created: function() {
     // Reads the textbooks from the database and populates the textbooks array
     let self = this;
     let currentUser = firebase.auth().currentUser.uid;
-    
+
     firebase.database().ref('/users/' + currentUser + '/favourites/').once('value')
     .then(function(favourites) {
       if (favourites.exists()) {
