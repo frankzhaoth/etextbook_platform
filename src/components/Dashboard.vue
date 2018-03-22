@@ -4,7 +4,10 @@
       <v-layout row wrap>
         <v-flex xs12>
           <v-card-text>
-            <v-text-field v-model="searchbookname" placeholder="search Textbook by name" ></v-text-field>
+            <v-text-field v-model="searchinput" placeholder="search Textbook" ></v-text-field>
+            <input type="radio"  v-model="searchtype" value="bookname"/>Book Name
+            <input type="radio"  v-model="searchtype" value="author"/>Author
+            <input type="radio"  v-model="searchtype" value="ISBN"/>ISBN
           </v-card-text>
         </v-flex>
         <v-flex xs12 v-if="Object.keys(this.favourites).length > 0">
@@ -49,8 +52,9 @@ export default {
   name: 'Dashboard',
   data () {
     return {
-      searchbookname: '',
+      searchinput: '',
       textbooks: [],
+      searchtype: '',
       favourites: {}
     }
   },
@@ -101,7 +105,18 @@ export default {
   computed:{
     filteredBook:function(){
       return this.textbooks.filter((textbook) => {
-        return textbook.title.match(this.searchbookname);
+        if (this.earchtype==='bookname'){
+          return textbook.title.match(this.searchinput);
+        }
+        else if (this.searchtype==='author'){
+          return textbook.author.match(this.searchinput);
+        }
+        else if (this.searchtype==='ISBN'){
+          return textbook.isbn.match(this.searchinput);
+        }
+        else{
+          return textbook.title.match(this.searchinput);
+        }
       });
     }
   },
