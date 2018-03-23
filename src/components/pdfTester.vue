@@ -26,7 +26,7 @@
           Highlighting disabled
         </v-snackbar>
       </v-flex>
-      <v-flex xs2 sm2 id="sidebar">
+      <v-flex xs4 sm3 md2 id="sidebar">
 
         <v-flex xs12 class="text-xs-center">
             <v-chip :selected="sidebarMode === 'notes'" :outline="sidebarMode !== 'notes'" :class="{ lowOpacity: sidebarMode !== 'notes' }" color="blue darken-2" class="white--text" @click="toggleSidebarMode()">Notes</v-chip>
@@ -200,7 +200,7 @@
           </v-flex>
         </v-flex>
       </v-flex>
-      <v-flex xs10 sm10>
+      <v-flex xs8 sm9 md8>
         <clip-loader :loading="!src" :color="'#7c7c7c'" :size="size"></clip-loader>
         <pdf ref="pdf" :src="src" :page="page" :rotate="rotate" @num-pages="numPages = $event"></pdf>
         <div id="text-layer" class="textLayer" @mousedown="startTextSelection($event)" @mouseup="endTextSelection"></div>
@@ -269,7 +269,6 @@ export default {
       }
     },
     startTextSelection: function(event) {
-      console.log(event.target.getBoundingClientRect());
       this.startingPoint = {"X": event.pageX, "Y": event.target.getBoundingClientRect().y + window.scrollY, "bounding": event.target.getBoundingClientRect()};
     },
     endTextSelection: function(event) {
@@ -279,6 +278,10 @@ export default {
         return;
       
       var endingPoint = {"X": event.pageX, "Y": event.target.getBoundingClientRect().y + window.scrollY, "bounding": event.target.getBoundingClientRect()};
+
+      console.log("Selected Text: " + window.getSelection().toString());
+      console.log("Starting coordinates: ", this.startingPoint.bounding);
+      console.log("Ending coordinates: ", endingPoint.bounding);
 
       var div = document.createElement('div');
 
@@ -305,7 +308,7 @@ export default {
         Object.assign(div.style,css);
         window.getSelection().removeAllRanges();
 
-        document.body.appendChild(div);
+        document.getElementById("pdfViewer").appendChild(div);
 
       }
 
@@ -314,7 +317,7 @@ export default {
         // Highlighting from top to bottom
         if (endingPoint.Y > this.startingPoint.Y) {
           var numOfLines = Math.ceil((endingPoint.Y - this.startingPoint.Y) / this.startingPoint.bounding.height);
-          console.log(numOfLines);
+          //console.log(numOfLines);
 
           // Highlight first line
 
@@ -335,7 +338,7 @@ export default {
           Object.assign(div.style,css);
           window.getSelection().removeAllRanges();
 
-          document.body.appendChild(div);
+          document.getElementById("pdfViewer").appendChild(div);
 
           // Highlight last line
           div = document.createElement('div')
@@ -357,7 +360,7 @@ export default {
           Object.assign(div.style,css);
           window.getSelection().removeAllRanges();
 
-          document.body.appendChild(div);
+          document.getElementById("pdfViewer").appendChild(div);
         }
 
         // Highlight in-between lines
@@ -371,7 +374,7 @@ export default {
 
           height = event.target.clientHeight + 2;
           left = Math.floor(endingPoint.bounding.x);
-          top = this.startingPoint.bounding.y + height * (i+1);
+          top = this.startingPoint.bounding.y + window.scrollY + height * (i+1);
 
           css = {
             position: "absolute",
@@ -385,7 +388,7 @@ export default {
           Object.assign(div.style,css);
           window.getSelection().removeAllRanges();
 
-          document.body.appendChild(div);
+          document.getElementById("pdfViewer").appendChild(div);
         }
 
       }
@@ -922,7 +925,7 @@ export default {
   }
 
   #pdfViewer .tools .pageShift {
-    width: 33%;
+    width: 45%;
   }
 
   #pdfViewer .tools .pageShift span {
@@ -946,7 +949,7 @@ export default {
   }
 
   #pdfViewer .tools .pageNumber {
-    width: 33%;
+    width: 20%;
     text-align: center;
   }
 
@@ -1063,7 +1066,7 @@ export default {
   #pdfViewer #notes .card p {
     font-size: .9rem;
     line-height: 130%;
-    word-break: break-all;
+    word-break: break-word;
   }
 
   #pdfViewer #notes .card i.fa-trash {
