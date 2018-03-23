@@ -2,14 +2,6 @@
   <div id="dashboard">
     <v-container grid-list-lg>
       <v-layout row wrap>
-        <v-flex xs12>
-          <v-card-text>
-            <v-text-field v-model="searchinput" placeholder="search Textbook" ></v-text-field>
-            <input type="radio"  v-model="searchtype" value="bookname"/>Book Name
-            <input type="radio"  v-model="searchtype" value="author"/>Author
-            <input type="radio"  v-model="searchtype" value="ISBN"/>ISBN
-          </v-card-text>
-        </v-flex>
         <v-flex xs12 v-if="Object.keys(this.favourites).length > 0">
           <h2>My Favourites</h2>
           <hr/>
@@ -17,7 +9,7 @@
         <v-flex xs6 sm3 md2 lg2 v-for="favourite in favourites">
           <v-card>
             <v-card-media v-on:click="clickTextbook(favourite.key)" :src="favourite.cover" height="200px"></v-card-media>
-            <v-card-title>{{favourite.title}}</v-card-title>
+            <v-card-title><span>{{favourite.title}}</span></v-card-title>
             <v-card-actions>
                 <v-icon v-on:click="toggleFavourite(favourite.key)" class="mr-2 ml-2" style="color: #1976D2;">fa-star</v-icon>
                 <v-icon v-on:click="viewTextbook(favourite.key)" class="mr-2 ml-2">fa-eye</v-icon>
@@ -29,10 +21,18 @@
           <h2>Textbook Collection</h2>
           <hr/>
         </v-flex>
+        <v-flex xs12>
+            <v-text-field v-model="searchinput" placeholder="Search..." ></v-text-field>
+            <v-radio-group v-model="searchtype" row class="pt-0">
+              <v-radio :key="'bookname'" :label="'Name'" :value="'bookname'" color="primary"></v-radio>
+              <v-radio :key="'author'" :label="'Author'" :value="'author'" color="primary"></v-radio>
+              <v-radio :key="'ISBN'" :label="'ISBN'" :value="'ISBN'" color="primary"></v-radio>
+            </v-radio-group>
+        </v-flex>
         <v-flex xs6 sm3 md2 lg2 v-for="textbook in filteredBook" :key="textbook.key">
           <v-card>
             <v-card-media v-on:click="clickTextbook(textbook.key)" :src="textbook.cover" height="200px"></v-card-media>
-            <v-card-title>{{ textbook.title }}</v-card-title>
+            <v-card-title><span>{{ textbook.title }}</span></v-card-title>
             <v-card-actions>
                 <v-icon v-on:click="toggleFavourite(textbook.key)" class="mr-2 ml-2">fa-star-o</v-icon>
                 <v-icon v-on:click="viewTextbook(textbook.key)" class="mr-2 ml-2">fa-eye</v-icon>
@@ -178,9 +178,24 @@ export default {
     color: #1976D2;
   }
 
+  #dashboard .card .card__title {
+    width: 100%;
+  }
+
+  #dashboard .card .card__title span{
+    width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
   #dashboard .loader {
     color: #666;
     text-align: center;
+  }
+
+  #dashboard >>> .input-group label {
+    font-size: 16px;
   }
 
 </style>
