@@ -204,14 +204,15 @@
         <clip-loader :loading="!src" :color="'#7c7c7c'" :size="size"></clip-loader>
         <pdf ref="pdf" :src="src" :page="page" :rotate="rotate" @num-pages="numPages = $event"></pdf>
         <div id="text-layer" class="textLayer" @mousedown="startTextSelection($event)" @mouseup="endTextSelection"></div>
-        <div id="highlights" v-for="highlight in highlights">
-          <div style="position: absolute; opacity: .6;" v-bind:style="{
+        <div id="highlights" v-for="(highlight, key) in highlights">
+          <div style="position: absolute;" v-bind:style="{
             top: highlight.top + 'px',
             left: highlight.left + 'px',
             width: highlight.width + 'px',
             height: highlight.height + 'px',
-            backgroundColor: '#' + highlight.colour,
-          }"></div>
+            backgroundColor: hexToRgb('#' + highlight.colour, .6),
+
+          }"><v-icon class="red--text" @click="deleteHighlight(key)">fa-minus-circle</v-icon></div>
         </div>
       </v-flex>
     </v-layout>
@@ -267,6 +268,17 @@ export default {
     }
   },
   methods: {
+    hexToRgb: function(hex, alpha) {
+      var r = parseInt(hex.slice(1, 3), 16),
+        g = parseInt(hex.slice(3, 5), 16),
+        b = parseInt(hex.slice(5, 7), 16);
+
+      if (alpha) {
+          return "rgba(" + r + ", " + g + ", " + b + ", " + alpha + ")";
+      } else {
+          return "rgb(" + r + ", " + g + ", " + b + ")";
+      }
+    },
     toggleHighlighting: function() {
       if (this.highlightingMode === false) {
         this.$refs.pdf.pdf.createTextLayer(this.rotate, this.$refs.pdf.$refs.canvas);
@@ -394,8 +406,10 @@ export default {
       }
 
     },
-    textSelection: function() {
-      console.log(window.getSelection().toString(), this);
+    deleteHighlight: function(key) {
+      console.log(key);
+      let currentUser = firebase.auth().currentUser.uid;
+      firebase.database().ref('/users/' + currentUser + '/highlights/' + this.$route.params.textbookId + '/' + this.page + '/' + key).remove();
     },
     getAnchormeText: function(text) {
       return anchorme(text);
@@ -993,6 +1007,7 @@ export default {
     vertical-align: middle;
     margin-left: 5px;
     opacity: .6;
+    cursor: pointer;
   }
 
   #pdfViewer .tools .icons span.selected {
@@ -1143,6 +1158,19 @@ export default {
   #pdfViewer #notes .card.new .card__actions span.selected, #pdfViewer .tools .highlighting span.selected {
     border: 2px solid #777;
     opacity: 1;
+  }
+
+  #pdfViewer #highlights >>> div i {
+    opacity: 0;
+    font-size: 1rem;
+    position: absolute;
+    top: -.5rem;
+    right: -.5rem;
+    cursor: pointer;
+  }
+
+  #pdfViewer #highlights >>> div:hover i {
+    opacity: 1 !important;
   }
 
   .shareF {
