@@ -18,6 +18,7 @@
           <v-icon small v-on:click="rotate += 90">fa-rotate-right</v-icon>
           <v-icon small v-on:click="$refs.pdf.print()">fa-print</v-icon>
           <v-icon small v-on:click="toggleHighlighting(); snackbar = true" v-bind:class="{selected: highlightingMode === true}">fa-pencil</v-icon>
+          <span v-if="highlightingMode === true" v-for="colour in highlightColours" v-bind:style="{ backgroundColor: '#' + colour }" v-bind:class="{selected: selectedHighlightColour === colour}" v-on:click="selectedHighlightColour = colour"></span>
         </div>
         <v-snackbar v-model="snackbar" v-if="highlightingMode === true" :timeout="2000" :top="true" :right="true">
           Highlighting enabled
@@ -164,8 +165,7 @@
               <span v-if="newNote" v-on:click="addNote" style="position: absolute; bottom: 10px; right: 16px; color: #313DB2; cursor: pointer;">Add</span>
             </v-card-title>
             <v-card-actions>
-              <span v-for="(colour, index) in colours" v-bind:style="{ backgroundColor: '#' + colour}" v-bind:class="{selected: selectedColour === colour}"
-              v-on:click="selectedColour = colour"> 
+              <span v-for="(colour, index) in colours" v-bind:style="{ backgroundColor: '#' + colour}" v-bind:class="{selected: selectedColour === colour}" v-on:click="selectedColour = colour"> 
               </span>
             </v-card-actions>
           </v-card>
@@ -204,6 +204,15 @@
         <clip-loader :loading="!src" :color="'#7c7c7c'" :size="size"></clip-loader>
         <pdf ref="pdf" :src="src" :page="page" :rotate="rotate" @num-pages="numPages = $event"></pdf>
         <div id="text-layer" class="textLayer" @mousedown="startTextSelection($event)" @mouseup="endTextSelection"></div>
+        <div id="highlights" v-for="highlight in highlights">
+          <div style="position: absolute; opacity: .6;" v-bind:style="{
+            top: highlight.top + 'px',
+            left: highlight.left + 'px',
+            width: highlight.width + 'px',
+            height: highlight.height + 'px',
+            backgroundColor: '#' + highlight.colour,
+          }"></div>
+        </div>
       </v-flex>
     </v-layout>
   </v-container>
@@ -249,7 +258,10 @@ export default {
       selectedQuestion: '',
       bestAnswer: '',
       selectedQuestionDialog: false,
+      highlights: {},
       highlightingMode: false,
+      highlightColours: ['E8FF2C', 'FF8C2C', '3DDDFF', 'FF66E1', '47FF37'],
+      selectedHighlightColour: 'E8FF2C',
       startingPoint: {},
       snackbar: false
     }
@@ -272,10 +284,12 @@ export default {
       this.startingPoint = {"X": event.pageX, "Y": event.target.getBoundingClientRect().y + window.scrollY, "bounding": event.target.getBoundingClientRect()};
     },
     endTextSelection: function(event) {
-      let self = this;
       // No text selected
       if (window.getSelection().toString() === "")
         return;
+
+      let self = this;
+      let currentUser = firebase.auth().currentUser.uid;
       
       var endingPoint = {"X": event.pageX, "Y": event.target.getBoundingClientRect().y + window.scrollY, "bounding": event.target.getBoundingClientRect()};
 
@@ -290,25 +304,23 @@ export default {
 
         var width = Math.abs(endingPoint.X - this.startingPoint.X);
         var height = event.target.clientHeight + 2;
+        
         if (endingPoint.X > this.startingPoint.X)
           var left = Math.floor(this.startingPoint.X);
         else
           var left = Math.floor(endingPoint.X);
+        
         var top = this.startingPoint.Y;
 
-        var css = {
-          position: "absolute",
-          width: width + "px",
-          height: height + "px",
-          left: left + "px",
-          top: top + "px",
-          backgroundColor: "yellow",
-          opacity: .4
-        }
-        Object.assign(div.style,css);
-        window.getSelection().removeAllRanges();
+        firebase.database().ref('/users/' + currentUser + '/highlights/' + self.$route.params.textbookId + '/' + self.page).push({
+          'width': width,
+          'height': height,
+          'left' : left,
+          'top' : top,
+          'colour' : self.selectedHighlightColour,
+        });
 
-        document.getElementById("pdfViewer").appendChild(div);
+        window.getSelection().removeAllRanges();
 
       }
 
@@ -326,19 +338,15 @@ export default {
           var height = event.target.clientHeight + 2;
           var top = this.startingPoint.Y;
 
-          var css = {
-            position: "absolute",
-            width: width + "px",
-            height: height + "px",
-            left: left + "px",
-            top: top + "px",
-            backgroundColor: "yellow",
-            opacity: .4
-          }
-          Object.assign(div.style,css);
-          window.getSelection().removeAllRanges();
+          firebase.database().ref('/users/' + currentUser + '/highlights/' + self.$route.params.textbookId + '/' + self.page).push({
+            'width': width,
+            'height': height,
+            'left' : left,
+            'top' : top,
+            'colour' : self.selectedHighlightColour,
+          });
 
-          document.getElementById("pdfViewer").appendChild(div);
+          window.getSelection().removeAllRanges();
 
           // Highlight last line
           div = document.createElement('div')
@@ -348,19 +356,15 @@ export default {
           left = Math.floor(endingPoint.bounding.x);
           top = endingPoint.Y;
 
-          css = {
-            position: "absolute",
-            width: width + "px",
-            height: height + "px",
-            left: left + "px",
-            top: top + "px",
-            backgroundColor: "yellow",
-            opacity: .4
-          }
-          Object.assign(div.style,css);
-          window.getSelection().removeAllRanges();
+          firebase.database().ref('/users/' + currentUser + '/highlights/' + self.$route.params.textbookId + '/' + self.page).push({
+            'width': width,
+            'height': height,
+            'left' : left,
+            'top' : top,
+            'colour' : self.selectedHighlightColour,
+          });
 
-          document.getElementById("pdfViewer").appendChild(div);
+          window.getSelection().removeAllRanges();
         }
 
         // Highlight in-between lines
@@ -376,19 +380,15 @@ export default {
           left = Math.floor(endingPoint.bounding.x);
           top = this.startingPoint.bounding.y + window.scrollY + height * (i+1);
 
-          css = {
-            position: "absolute",
-            width: width + "px",
-            height: height + "px",
-            left: left + "px",
-            top: top + "px",
-            backgroundColor: "yellow",
-            opacity: .4
-          }
-          Object.assign(div.style,css);
-          window.getSelection().removeAllRanges();
+          firebase.database().ref('/users/' + currentUser + '/highlights/' + self.$route.params.textbookId + '/' + self.page).push({
+            'width': width,
+            'height': height,
+            'left' : left,
+            'top' : top,
+            'colour' : self.selectedHighlightColour,
+          });
 
-          document.getElementById("pdfViewer").appendChild(div);
+          window.getSelection().removeAllRanges();
         }
 
       }
@@ -776,6 +776,15 @@ export default {
         console.log(error);
       });
 
+      // Fetch highlights from database
+      ref = firebase.database().ref('/users/' + currentUser + '/highlights/' + self.$route.params.textbookId + '/' + self.page);
+      ref.on("value", function(snapshot) {
+        self.highlights = snapshot.val();
+      },
+      function (errorObject) {
+          console.log(error);
+      });
+
 
       if (this.noteViewMode === 'page') {
         // Get notes from firebase
@@ -855,6 +864,13 @@ export default {
 
           pathRef.getDownloadURL().then(function(url) {
             self.src = url;
+
+            // Fetch highlights from database
+            firebase.database().ref('/users/' + currentUser + '/highlights/' + self.$route.params.textbookId + '/' + self.page).on("value",
+            function(snapshot) {
+              self.highlights = snapshot.val();
+            });
+
             //console.log(self.src);
           });
       }
@@ -968,13 +984,20 @@ export default {
     color: #3B87D8;
   }
 
-  #pdfViewer .tools .highlighting {
-    width: 10%;
+  #pdfViewer .tools .icons span {
+    width: 18px;
+    height: 18px;
+    border: 2px solid #ABB7B7;
+    border-radius: 50%;
+    display: inline-block;
+    vertical-align: middle;
+    margin-left: 5px;
+    opacity: .6;
   }
 
-  #pdfViewer .tools .highlighting span {
-    display: inline-block;
-    margin-left: 10px;
+  #pdfViewer .tools .icons span.selected {
+    border: 2px solid #777;
+    opacity: 1;
   }
 
   #pdfViewer .lowOpacity {
