@@ -26,6 +26,18 @@
         <v-snackbar v-model="snackbar" v-if="highlightingMode === false" :timeout="2000" :top="true" :right="true">
           Highlighting disabled
         </v-snackbar>
+
+        <v-snackbar v-model='alreadyFriend' :timeout="2000" :left="true">
+          Email is already added
+        </v-snackbar>
+        <v-snackbar v-model='addingSelf' :timeout="2000" :left="true">
+          You are trying to share to yourself
+        </v-snackbar>
+        <v-snackbar v-model='addingWrongEmail' :timeout="2000" :left="true">
+          Email not found in database - try again
+        </v-snackbar>
+
+
       </v-flex>
       <v-flex xs4 sm3 md2 id="sidebar">
 
@@ -139,17 +151,29 @@
 
         <v-flex xs12 id="notes" v-if="sidebarMode === 'notes'">
         <p class="subheading">Notes <span v-if="noteViewMode === 'page'" class="grey--text text--darken-1" @click="toggleNotesMode()">View All</span><span v-if="noteViewMode === 'all'" class="grey--text text--darken-1" @click="toggleNotesMode()">View page</span></p>
+        <!-- Share notes -->
         <span>
-          <v-tooltip bottom>
+          <v-tooltip bottom allow-overflow>
             <v-icon slot="activator" @click="toggleShare">fa-share</v-icon>
-            <span>Share</span>
+            <span>Share notes</span>
           </v-tooltip>
           <v-flex xs8 v-if="addFriend">
-              <v-text-field @keyup.enter="shareNote(note)" v-model="friend" label="Friend's email"  clearable></v-text-field>
+              <v-text-field @keyup.enter="shareNote(note)" v-model="friend" label="Note - Friend's email"  clearable></v-text-field>
             </v-flex>
         </span>
+        <!-- Share highlights -->
+        <span>
+          <v-tooltip bottom allow-overflow>
+            <v-icon slot="activator" @click="toggleShareHighlight">fa-share</v-icon>
+            <span>Share highlights</span>
+          </v-tooltip>
+          <v-flex xs8 v-if="addHiliFriend">
+            <v-text-field @keyup.enter="shareHighlight" v-model="hiliFriend" label="HiLi - Friend's email"  clearable></v-text-field>
+          </v-flex>
+        </span>
+
         <v-divider></v-divider>
-        <v-select
+        Note: <v-select
           :items="dropDown"
           label="Filter by author"
           single-line
@@ -157,7 +181,14 @@
           bottom
           v-on:change="showNotes"
         ></v-select>
-
+        Highlight: <v-select
+          :items="hiliDropDown"
+          label="Filter by author"
+          single-line
+          dense
+          bottom
+          v-on:change="showHighlights"
+        ></v-select>
         <v-flex xs12>
           <v-card class="new mb-4" v-bind:style="{ backgroundColor: '#' + selectedColour}">
             <v-card-title>
@@ -250,10 +281,14 @@ export default {
       colours: ['FFF9A2', '6FC0F7', 'EAB9EA', 'A5E7F9', 'D9F9A5'],
       selectedColour: 'FFF9A2',
       friend: '',
+      hiliFriend: '',
       addFriend: false,
+      addHiliFriend: false,
       shareType: null,
       dropDown: [],           // loaded at created
+      hiliDropDown: [],
       uid: '',
+      hid: '',                // hid used as id of selected user for highlight; uid for notes
       questionDialog: false,
       questionsArray: [],
       selectedQuestion: '',
@@ -264,7 +299,10 @@ export default {
       highlightColours: ['E8FF2C', 'FF8C2C', '3DDDFF', 'FF66E1', '47FF37'],
       selectedHighlightColour: 'E8FF2C',
       startingPoint: {},
-      snackbar: false
+      snackbar: false,
+      alreadyFriend: false,
+      addingSelf: false,
+      addingWrongEmail: false
     }
   },
   methods: {
@@ -490,13 +528,32 @@ export default {
       else
         this.addFriend = false;
     },
+    toggleShareHighlight: function() {
+      if(this.addHiliFriend == false)
+        this.addHiliFriend = true;
+      else
+        this.addHiliFriend = false;
+    },
     shareNote: function(note) {
+      // get self-info(name,email,id)
+      // get friend-info
+      // save friend-info in self-db
+      // save self-info in friend-db
+
       let self = this;
       let currentUser = firebase.auth().currentUser.uid;
-      let name;
+      let name, email, id;
+      let frdEmail, frdName, frdId;
+      let isFriend = false;
+      let userRef = firebase.database().ref('/user/');
+      frdEmail = self.friend;
+      self.friend = '';
+
       firebase.database().ref('/users/' + currentUser).once('value')
       .then(function(snapshot) {
         name =  snapshot.val().name;
+        email = snapshot.val().email;
+        id = snapshot.key;
       });
       firebase.database().ref('/users/')
       .once('value', function(snapshot) {
@@ -504,16 +561,11 @@ export default {
           var childKey = childSnapshot.key;
           var childData = childSnapshot.val();
           // ...
-          if(self.friend == childData.email){
-            console.log("Friend email: " + self.friend);
+          if(frdEmail == childData.email){
+            console.log("Friend email: " + frdEmail);
             console.log("childData: " + childData.email);
-            // friend's email matches, add the required data
-            firebase.database().ref('/users/' + childKey + '/friends/' + currentUser + '/notes/').child(self.$route.params.textbookId + '/' + self.page)
-            .push({
-              'text': note.text,
-              'colour': note.colour,
-              'Writer': name
-            })
+            frdName = childData.name;
+            frdId = childKey;
           }
         })
       })
@@ -551,7 +603,100 @@ export default {
         }
       });
     },
+    shareHighlight: function() {
+      let self = this;
+      let currentUser = firebase.auth().currentUser.uid;
+      let name, email, id;
+      let frdEmail, frdName, frdId;
+      let isFriend = false;
+      let isSelf = false;
+      let wrongEmail = true;
 
+      frdEmail = self.hiliFriend;
+      self.hiliFriend = '';
+      self.alreadyFriend = false;
+      self.addingSelf = false;
+      self.addingWrongEmail = false;
+      firebase.database().ref('/users/' + currentUser ).once('value')
+      .then(function(snapshot) {
+        name =  snapshot.val().name;
+        email = snapshot.val().email;
+
+        id = snapshot.key;
+        if(frdEmail == email)
+          isSelf = true;
+        console.log('got self-info')
+      });
+      firebase.database().ref('/users/')
+      .once('value', function(snapshot) {
+        snapshot.forEach(function(childSnapshot) {
+          var childKey = childSnapshot.key;
+          var childData = childSnapshot.val();
+          // ...
+          if(frdEmail == childData.email){
+            wrongEmail = false;
+            console.log("Friend email: " + frdEmail);
+            console.log("childData: " + childData.email);
+            frdName = childData.name;
+            console.log('got friend-info')
+            frdId = childKey;
+            console.log('got friend-info')
+          }
+        })
+      })
+      .then( function() {
+        firebase.database().ref('/users/' + currentUser + '/highlights/' + self.$route.params.textbookId + '/hili_friends').once('value', function(snap) {
+          snap.forEach(function(friends) {
+            console.log('checking if friend');
+            if(friends.val().email == frdEmail)
+              isFriend = true;
+            console.log(isFriend);
+          })
+        })
+        .then( function() {
+          if(isFriend) {          // isFriend == true - meaning friend email is already added.
+            self.alreadyFriend = true;
+            console.log('already friend = true');
+          } else if (isSelf) {
+            self.addingSelf = true;
+          } else if (wrongEmail) {
+            self.addingWrongEmail = true;
+          }
+          else
+          {
+            console.log('pushing phase');
+            firebase.database().ref('/users/' + currentUser + '/highlights/' + self.$route.params.textbookId + '/hili_friends')
+            .push({
+              'email' : frdEmail,
+              'name' : frdName,
+              'id' : frdId
+            });
+            
+            firebase.database().ref('/users/')
+            .once('value', function(snapshot) {
+              snapshot.forEach(function(childSnapshot) {
+                var childKey = childSnapshot.key;
+                var childData = childSnapshot.val();
+                console.log("Email: " + childData.email);
+
+                if(frdEmail == childData.email){
+                  console.log("Friend email: " + frdEmail);
+                  console.log("childData: " + childData.email);
+                  // friend's email matches, add the required data
+                  firebase.database().ref('/users/' + childKey + '/highlights/' + self.$route.params.textbookId + '/hili_friends')
+                  .push({
+                    'email': email,
+                    'name' : name,
+                    'id' : id
+                  });
+                }
+
+              });
+            });   
+          }
+        });
+      });
+    },
 
     toggleSidebarMode: function() {
       if (this.sidebarMode === 'notes')
@@ -695,6 +840,33 @@ export default {
 
 
     },
+    showHighlights: function(value) {
+
+      let currentUser = firebase.auth().currentUser.uid;
+      let self = this;
+      let myRef = firebase.database().ref('/users/' + currentUser + '/notes/' + self.$route.params.textbookId + '/' + self.page);
+      if(value=="Me"){    // Show current user's notes
+        console.log('me selected');
+        self.hid = currentUser;
+      } else {        // Value = One Friend's name
+        console.log(value + ' - Friend selected');
+        firebase.database().ref('/users/' + currentUser + '/highlights/' + self.$route.params.textbookId + '/hili_friends')
+        .once('value', function(snap) {
+          snap.forEach(function(slist) {
+            let val = slist.val();
+            if(val.name == value) {
+              console.log(value + ' -- ID: ' + val.id );
+              console.log(val.id);
+              self.hid = val.id;
+            }
+          });
+        });
+
+      }
+
+      //self.friend = '';
+
+    },
     getRelativeTime: function(time) {
       return moment(time, "dddd, MMMM Do YYYY, h:mm:ss a").fromNow();
     },
@@ -791,7 +963,7 @@ export default {
       });
 
       // Fetch highlights from database
-      ref = firebase.database().ref('/users/' + currentUser + '/highlights/' + self.$route.params.textbookId + '/' + self.page);
+      ref = firebase.database().ref('/users/' + self.hid + '/highlights/' + self.$route.params.textbookId + '/' + self.page);
       ref.on("value", function(snapshot) {
         self.highlights = snapshot.val();
       },
@@ -844,18 +1016,21 @@ export default {
       }
 
     },
-
-    notes: function() {
-      console.log('------***** self.notes changed ************----------');
-    },
-
-
+    hid: function() {
+      // Fetch highlights from database
+      let self = this;
+      firebase.database().ref('/users/' + this.hid + '/highlights/' + this.$route.params.textbookId + '/' + this.page).on("value",
+      function(snapshot) {
+        self.highlights = snapshot.val();
+      });
+    }
   },
   mounted: function() {
     
     let currentUser = firebase.auth().currentUser.uid;
     let self = this;
     this.uid = currentUser;
+    this.hid = currentUser;
     /*
     // Get notes from firebase
     let ref = firebase.database().ref('/users/' + self.uid + '/notes/' + this.$route.params.textbookId + '/' + this.page);
@@ -903,6 +1078,21 @@ export default {
         snap.forEach(function(childSnap) {
           let val = childSnap.val();
           self.dropDown.push(val.name);
+        });
+      }
+      
+    });
+
+    // load the hilidropDown from currentUser's friend list (+ 'me')
+    firebase.database().ref('/users/' + currentUser + '/highlights/' + self.$route.params.textbookId + '/hili_friends')
+    .on('value', function(snap) {
+      self.hiliDropDown.push('Me');
+      
+      if(snap.exists()) {          // there is atleast 1 friend
+        //self.dropDown.push('All');
+        snap.forEach(function(childSnap) {
+          let val = childSnap.val();
+          self.hiliDropDown.push(val.name);
         });
       }
       
