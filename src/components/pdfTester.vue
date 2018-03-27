@@ -206,7 +206,7 @@
             <v-subheader class="pl-0" :key="key">Page {{key}}</v-subheader>
             <v-divider></v-divider>
             <v-card v-for="(noteInfo, noteKey) in note" v-bind:style="{ backgroundColor: '#' + noteInfo.colour}">
-              <v-icon v-on:click="deleteNote(noteKey)">fa-trash</v-icon>
+              <v-icon v-on:click="deleteNote(noteKey)" v-if="noteDelVisible">fa-trash</v-icon>
               <v-icon @click="toggleShare"  class="shareF" small right color="blue darken-4">chat</v-icon>
 
               <v-card-title>
@@ -220,7 +220,7 @@
           <v-subheader v-if="noteViewMode === 'page'" class="pl-0">Page {{page}}</v-subheader>
           <v-divider v-if="noteViewMode === 'page'"></v-divider>
           <v-card v-if="noteViewMode === 'page'" v-for="(note, key) in notes"  v-bind:style="{ backgroundColor: '#' + note.colour}">
-            <v-icon v-on:click="deleteNote(key)">fa-trash</v-icon>
+            <v-icon v-on:click="deleteNote(key)" v-if="noteDelVisible">fa-trash</v-icon>
             <v-icon @click="toggleShare"  class="shareF" small right color="blue darken-4">chat</v-icon>
 
             <v-card-title>
@@ -243,7 +243,7 @@
             height: highlight.height + 'px',
             backgroundColor: hexToRgb('#' + highlight.colour, .6),
 
-          }"><v-icon class="red--text" @click="deleteHighlight(key)">fa-minus-circle</v-icon></div>
+          }"><v-icon class="red--text" @click="deleteHighlight(key)" v-if="hiliDelVisible">fa-minus-circle</v-icon></div>
         </div>
       </v-flex>
     </v-layout>
@@ -302,7 +302,9 @@ export default {
       snackbar: false,
       alreadyFriend: false,
       addingSelf: false,
-      addingWrongEmail: false
+      addingWrongEmail: false,
+      noteDelVisible: true,
+      hiliDelVisible: true
     }
   },
   methods: {
@@ -1007,6 +1009,7 @@ export default {
 
     uid: function() {
       let self = this;
+      let currentUser = firebase.auth().currentUser.uid;
       console.log('------***** uid changed ************----------' + self.uid);
       // Get notes from firebase
       let ref = firebase.database().ref('/users/' + self.uid + '/notes/' + this.$route.params.textbookId + '/' + this.page);
@@ -1032,14 +1035,30 @@ export default {
         });
       }
 
+
+      console.log ('uid-------');
+      console.log (self.noteDelVisible)
+      if(currentUser == self.uid)
+        self.noteDelVisible = true;
+      else
+        self.noteDelVisible = false;               // hide the delete note button (bin icon) for friends' notes
+
     },
     hid: function() {
       // Fetch highlights from database
       let self = this;
+      let currentUser = firebase.auth().currentUser.uid;
       firebase.database().ref('/users/' + this.hid + '/highlights/' + this.$route.params.textbookId + '/' + this.page).on("value",
       function(snapshot) {
         self.highlights = snapshot.val();
       });
+
+      console.log ('hid-------');
+      console.log (self.hiliDelVisible)
+      if (currentUser == self.hid)
+        self.hiliDelVisible = true;
+      else
+        self.hiliDelVisible = false;               // hide the delete highlight button (red icon) for friends' highlights
     }
   },
   mounted: function() {
