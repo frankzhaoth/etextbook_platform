@@ -544,16 +544,23 @@ export default {
       let currentUser = firebase.auth().currentUser.uid;
       let name, email, id;
       let frdEmail, frdName, frdId;
-      let isFriend = false;
       let userRef = firebase.database().ref('/user/');
       frdEmail = self.friend;
       self.friend = '';
 
+      let isFriend = false;
+      let isSelf = false;
+      let wrongEmail = true;
+      self.alreadyFriend = false;
+      self.addingSelf = false;
+      self.addingWrongEmail = false;
       firebase.database().ref('/users/' + currentUser).once('value')
       .then(function(snapshot) {
         name =  snapshot.val().name;
         email = snapshot.val().email;
         id = snapshot.key;
+        if(frdEmail == email)
+          isSelf = true;
       });
       firebase.database().ref('/users/')
       .once('value', function(snapshot) {
@@ -562,6 +569,7 @@ export default {
           var childData = childSnapshot.val();
           // ...
           if(frdEmail == childData.email){
+            wrongEmail = false;
             console.log("Friend email: " + frdEmail);
             console.log("childData: " + childData.email);
             frdName = childData.name;
@@ -570,9 +578,17 @@ export default {
         })
       })
       .then( function() {
-        if (!isFriend)
+        if(isFriend) {          // isFriend == true - meaning friend email is already added.
+          self.alreadyFriend = true;
+          console.log('already friend = true');
+        } else if (isSelf) {
+          self.addingSelf = true;
+        } else if (wrongEmail) {
+          self.addingWrongEmail = true;
+        }
+        else
         {
-          firebase.database().ref('/users/' + currentUser + '/friends/')
+          firebase.database().ref('/users/' + currentUser + '/notes/' + self.$route.params.textbookId + '/friends')
           .push({
             'email' : frdEmail,
             'name' : frdName,
@@ -590,7 +606,7 @@ export default {
                 console.log("Friend email: " + frdEmail);
                 console.log("childData: " + childData.email);
                 // friend's email matches, add the required data
-                firebase.database().ref('/users/' + childKey + '/friends/')
+                firebase.database().ref('/users/' + frdId + '/notes/' + self.$route.params.textbookId + '/friends')
                 .push({
                   'email': email,
                   'name' : name,
@@ -714,7 +730,7 @@ export default {
         let ref = firebase.database().ref('/users/' + self.uid + '/notes/' + this.$route.params.textbookId);
         ref.on("value", function(snapshot) {
           self.notesList = snapshot.val();
-          //let keys = Object.keys(snapshot.val());
+          delete self.notesList['friends'];          //let keys = Object.keys(snapshot.val());
           //console.log(snapshot.val()[keys[0]]);
         }, 
         function (errorObject) {
@@ -1009,6 +1025,7 @@ export default {
         let ref = firebase.database().ref('/users/' + self.uid + '/notes/' + this.$route.params.textbookId);
         ref.on("value", function(snapshot) {
           self.notesList = snapshot.val();
+          delete self.notesList['friends']; 
         }, 
         function (errorObject) {
           console.log(error);
@@ -1069,7 +1086,7 @@ export default {
     });
 
     // load the dropDown from currentUser's friend list (+ 'me')
-    firebase.database().ref('/users/' + currentUser + '/friends/')
+    firebase.database().ref('/users/' + currentUser + '/notes/' + self.$route.params.textbookId + '/friends')
     .on('value', function(snap) {
       self.dropDown.push('Me');
       
