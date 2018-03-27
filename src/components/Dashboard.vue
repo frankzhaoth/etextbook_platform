@@ -105,17 +105,17 @@ export default {
   computed:{
     filteredBook:function(){
       return this.textbooks.filter((textbook) => {
-        if (this.earchtype==='bookname'){
-          return textbook.title.match(this.searchinput);
+        if (this.earchtype ==='bookname'){
+          return textbook.title.toLowerCase().match(this.searchinput.toLowerCase());
         }
         else if (this.searchtype==='author'){
-          return textbook.author.match(this.searchinput);
+          return textbook.author.toLowerCase().match(this.searchinput.toLowerCase());
         }
         else if (this.searchtype==='ISBN'){
           return textbook.isbn.match(this.searchinput);
         }
         else{
-          return textbook.title.match(this.searchinput);
+          return textbook.title.toLowerCase().match(this.searchinput.toLowerCase());
         }
       });
     }
