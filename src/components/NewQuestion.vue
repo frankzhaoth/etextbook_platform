@@ -10,8 +10,11 @@
         <v-layout>
           <v-flex>
           	<v-card-text>
-              <v-text-field v-model="question" label="Question" color="pink darken-3"></v-text-field>
-              <vue-editor v-model="body" :editorToolbar="customToolbar"></vue-editor>
+              <v-text-field v-model="question" label="Title" color="pink darken-3"></v-text-field>
+              <vue-editor placeholder="Describe your question in more detail..." 
+              v-model="body" 
+              :editorToolbar="customToolbar">
+              </vue-editor>
             </v-card-text>
             
             <v-card-actions>
@@ -103,6 +106,8 @@ export default {
         // This component is being reused in the textbook view url and the new question url
         if (routeName === "pdfTester") {
           // When we are in the textbook view url, we notify the parent that the question was submitted
+          self.question = '';
+          self.body = '';
           self.notifyParent();
         } else {
           // We are in the new question url, so redirect to the question page

@@ -122,7 +122,7 @@
                     <v-card-title class="py-2 px-3">
                       <h3>{{bestAnswer.userName}}</h3>
                       <v-spacer></v-spacer>
-                      <h6 class="caption grey--text text--darken-1">{{ getRelativeTime(bestAnswer.date) }}</h6>
+                      <h6 class="caption grey--text text--darken-1">{{ getRelativeTime(bestAnswer.formattedDate) }}</h6>
                     </v-card-title>
                     <v-divider></v-divider>
                     <v-card-text>
@@ -915,7 +915,7 @@ export default {
 
             answer['voteScore'] = voteScore;
             answer['accepted'] = true;
-            answer['date'] = moment(answer.date).local().format("dddd, MMMM Do YYYY, h:mm:ss a");
+            answer['formattedDate'] = moment(answer.date).local().format("dddd, MMMM Do YYYY, h:mm:ss a");
 
             this.bestAnswer = answer;
         }
@@ -938,7 +938,7 @@ export default {
             }
 
             answer['voteScore'] = voteScore;
-            answer['date'] = moment(answer.date).local().format("dddd, MMMM Do YYYY, h:mm:ss a");
+            answer['formattedDate'] = moment(answer.date).local().format("dddd, MMMM Do YYYY, h:mm:ss a");
             questionAnswers.push(answer);
           });
 
@@ -1149,6 +1149,7 @@ export default {
           self.page = questionData.page;
         }
       });
+      self.toggleSidebarMode();
     }
   },
 
