@@ -207,7 +207,6 @@
             <v-divider></v-divider>
             <v-card v-for="(noteInfo, noteKey) in note" v-bind:style="{ backgroundColor: '#' + noteInfo.colour}">
               <v-icon v-on:click="deleteNote(noteKey)" v-if="noteDelVisible">fa-trash</v-icon>
-              <v-icon @click="toggleShare"  class="shareF" small right color="blue darken-4">chat</v-icon>
 
               <v-card-title>
                 <p>{{noteInfo.text}}</p>
@@ -221,7 +220,6 @@
           <v-divider v-if="noteViewMode === 'page'"></v-divider>
           <v-card v-if="noteViewMode === 'page'" v-for="(note, key) in notes"  v-bind:style="{ backgroundColor: '#' + note.colour}">
             <v-icon v-on:click="deleteNote(key)" v-if="noteDelVisible">fa-trash</v-icon>
-            <v-icon @click="toggleShare"  class="shareF" small right color="blue darken-4">chat</v-icon>
 
             <v-card-title>
               <p v-html="getAnchormeText(note.text)"></p>
