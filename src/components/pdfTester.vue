@@ -818,7 +818,7 @@ export default {
       } else if (value== "All"){
         console.log('All selected');
         
-        firebase.database().ref('/users/' + currentUser + '/friends/')
+        firebase.database().ref('/users/' + currentUser + '/notes/' + self.$route.params.textbookId + '/' + 'friends')
         .once('value', function (snap) {
           snap.forEach(function (friends) {
             idList.push(friends.val().id);
@@ -845,7 +845,7 @@ export default {
 
       } else {        // Value = One Friend's name
         console.log(value + ' - Friend selected');
-        firebase.database().ref('/users/' + currentUser + '/friends/')
+        firebase.database().ref('/users/' + currentUser + '/notes/' + self.$route.params.textbookId + '/' + 'friends')
         .once('value', function(snap) {
           snap.forEach(function(slist) {
             let val = slist.val();
@@ -1052,6 +1052,7 @@ export default {
       // Fetch highlights from database
       let self = this;
       let currentUser = firebase.auth().currentUser.uid;
+      console.log('------***** hid changed ************----------' + self.uid);
       firebase.database().ref('/users/' + this.hid + '/highlights/' + this.$route.params.textbookId + '/' + this.page).on("value",
       function(snapshot) {
         self.highlights = snapshot.val();
