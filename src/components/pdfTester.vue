@@ -18,6 +18,7 @@
           <v-icon small v-on:click="rotate += 90">fa-rotate-right</v-icon>
           <v-icon small v-on:click="$refs.pdf.print()">fa-print</v-icon>
           <v-icon small v-on:click="toggleHighlighting(); snackbar = true" v-bind:class="{selected: highlightingMode === true}">fa-pencil</v-icon>
+          
           <span v-if="highlightingMode === true" v-for="colour in highlightColours" v-bind:style="{ backgroundColor: '#' + colour }" v-bind:class="{selected: selectedHighlightColour === colour}" v-on:click="selectedHighlightColour = colour"></span>
         </div>
         <v-snackbar v-model="snackbar" v-if="highlightingMode === true" :timeout="2000" :top="true" :right="true">
@@ -161,16 +162,7 @@
               <v-text-field @keyup.enter="shareNote(note)" v-model="friend" label="Note - Friend's email"  clearable></v-text-field>
             </v-flex>
         </span>
-        <!-- Share highlights -->
-        <span>
-          <v-tooltip bottom allow-overflow>
-            <v-icon slot="activator" @click="toggleShareHighlight">fa-share</v-icon>
-            <span>Share highlights</span>
-          </v-tooltip>
-          <v-flex xs8 v-if="addHiliFriend">
-            <v-text-field @keyup.enter="shareHighlight" v-model="hiliFriend" label="HiLi - Friend's email"  clearable></v-text-field>
-          </v-flex>
-        </span>
+        
 
         <v-divider></v-divider>
         Note: <v-select
@@ -181,7 +173,19 @@
           bottom
           v-on:change="showNotes"
         ></v-select>
-        Highlight: <v-select
+        Highlight: 
+        <!-- Share highlights -->
+          <span>
+            <v-tooltip bottom allow-overflow>
+              <v-icon slot="activator" @click="toggleShareHighlight" class="right">fa-share</v-icon>
+              <span>Share highlights</span>
+            </v-tooltip>
+            <v-flex xs8 v-if="addHiliFriend">
+              <v-text-field @keyup.enter="shareHighlight" v-model="hiliFriend" label="HiLi - Friend's email"  clearable></v-text-field>
+            </v-flex>
+          </span>
+
+          <v-select
           :items="hiliDropDown"
           label="Filter by author"
           single-line
