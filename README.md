@@ -1,9 +1,12 @@
-# ece496
+
+# etextbook_platform
 
 > A Vue.js project
 
+Online eTestbook Platfrom for ECE 496 capstone project
+
 Website deployed: https://ece496-etext.firebaseapp.com
-For future deploys: 
+For future deploys:
 	1. npm run build
 	2. firebase deploy
 
